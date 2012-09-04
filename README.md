@@ -1,4 +1,4 @@
 digi-lib
 ========
 
-base digi library
+base library
