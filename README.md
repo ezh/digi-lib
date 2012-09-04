@@ -18,7 +18,7 @@ AUTHORS
 LICENSE
 -------
 
-The Digi Lib Project is licensed to you under the terms of
+The Digi-Lib Project is licensed to you under the terms of
 the Apache License, version 2.0, a copy of which has been
 included in the LICENSE file.
 Please check the individual source files for details.
