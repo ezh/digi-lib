@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- * 
+ *
  * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,13 @@
 package org.digimead.digi.lib.log
 
 import java.util.Date
-
 import scala.annotation.implicitNotFound
-
 import org.slf4j.Marker
+import org.slf4j.helpers.MarkerIgnoringBase
 
 @implicitNotFound(msg = "please define implicit RichLogger")
-class RichLogger(val name: String) extends org.slf4j.Logger {
-  override def getName(): String = name
+class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
+  override def getName(): String = loggerName
   // fast look while development, highlight it in your IDE
   def ___gaze(msg: String) {
     val t = new Throwable(msg)
@@ -47,31 +46,26 @@ class RichLogger(val name: String) extends org.slf4j.Logger {
   }
   def isTraceExtraEnabled(): Boolean = Logging.isTraceExtraEnabled
   // trace
-  protected def isTraceEnabled(marker: Marker) = isTraceEnabled
-  protected def trace(marker: Marker, msg: String) = trace(msg)
-  protected def trace(marker: Marker, format: String, arg: Object) = trace(format, arg)
-  protected def trace(marker: Marker, format: String, arg1: Object, arg2: Object) = trace(format, arg1, arg2)
-  protected def trace(marker: Marker, format: String, argArray: Array[AnyRef]) = trace(format, argArray)
-  protected def trace(marker: Marker, msg: String, t: Throwable) = trace(msg, t)
+  override protected def isTraceEnabled(marker: Marker) = isTraceEnabled
   /* @see org.slf4j.Logger#isTraceEnabled() */
   def isTraceEnabled(): Boolean = Logging.isTraceEnabled
   def trace(msg: String) = if (Logging.isTraceEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
 
   def trace(format: String, arg: Object) = if (Logging.isTraceEnabled) {
     val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
   }
   def trace(format: String, arg1: Object, arg2: Object) = if (Logging.isTraceEnabled) {
     val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
   }
-  def trace(format: String, argArray: Array[AnyRef]) = if (Logging.isTraceEnabled) {
+  def trace(format: String, argArray: AnyRef*): Unit = if (Logging.isTraceEnabled) {
     val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
   }
   def trace(msg: String, t: Throwable) = if (Logging.isTraceEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, name, msg, Some(t)))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg, Some(t)))
   def traceWhere(msg: String): Unit = if (Logging.isTraceEnabled)
     if (Logging.isTraceExtraEnabled)
       logWhere(msg, trace, trace)(-2)
@@ -84,30 +78,25 @@ class RichLogger(val name: String) extends org.slf4j.Logger {
       trace(msg)
 
   // debug
-  protected def isDebugEnabled(marker: Marker) = isDebugEnabled
-  protected def debug(marker: Marker, msg: String) = debug(msg)
-  protected def debug(marker: Marker, format: String, arg: Object) = debug(format, arg)
-  protected def debug(marker: Marker, format: String, arg1: Object, arg2: Object) = debug(format, arg1, arg2)
-  protected def debug(marker: Marker, format: String, argArray: Array[AnyRef]) = debug(format, argArray)
-  protected def debug(marker: Marker, msg: String, t: Throwable) = debug(msg, t)
+  override protected def isDebugEnabled(marker: Marker) = isDebugEnabled
   /* @see org.slf4j.Logger#isDebugEnabled() */
   def isDebugEnabled(): Boolean = Logging.isDebugEnabled
   def debug(msg: String) = if (Logging.isDebugEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
   def debug(format: String, arg: Object) = if (Logging.isDebugEnabled) {
     val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
   }
   def debug(format: String, arg1: Object, arg2: Object) = if (Logging.isDebugEnabled) {
     val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
   }
-  def debug(format: String, argArray: Array[AnyRef]) = if (Logging.isDebugEnabled) {
+  def debug(format: String, argArray: AnyRef*): Unit = if (Logging.isDebugEnabled) {
     val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
   }
   def debug(msg: String, t: Throwable) = if (Logging.isDebugEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, name, msg, Some(t)))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg, Some(t)))
   def debugWhere(msg: String): Unit = if (Logging.isDebugEnabled)
     if (Logging.isTraceExtraEnabled)
       logWhere(msg, debug, debug)(-2)
@@ -120,30 +109,25 @@ class RichLogger(val name: String) extends org.slf4j.Logger {
       debug(msg)
 
   // info
-  protected def isInfoEnabled(marker: Marker) = isInfoEnabled
-  protected def info(marker: Marker, msg: String) = info(msg)
-  protected def info(marker: Marker, format: String, arg: Object) = info(format, arg)
-  protected def info(marker: Marker, format: String, arg1: Object, arg2: Object) = info(format, arg1, arg2)
-  protected def info(marker: Marker, format: String, argArray: Array[AnyRef]) = info(format, argArray)
-  protected def info(marker: Marker, msg: String, t: Throwable) = info(msg, t)
+  override protected def isInfoEnabled(marker: Marker) = isInfoEnabled
   /* @see org.slf4j.Logger#isInfoEnabled() */
   def isInfoEnabled: Boolean = Logging.isInfoEnabled
   def info(msg: String) = if (Logging.isInfoEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
   def info(format: String, arg: Object) = if (Logging.isInfoEnabled) {
     val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
   }
   def info(format: String, arg1: Object, arg2: Object) = if (Logging.isInfoEnabled) {
     val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
   }
-  def info(format: String, argArray: Array[AnyRef]) = if (Logging.isInfoEnabled) {
+  def info(format: String, argArray: AnyRef*): Unit = if (Logging.isInfoEnabled) {
     val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
   }
   def info(msg: String, t: Throwable) = if (Logging.isInfoEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, name, msg, Some(t)))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg, Some(t)))
   def infoWhere(msg: String): Unit = if (Logging.isInfoEnabled)
     if (Logging.isTraceExtraEnabled)
       logWhere(msg, info, info)(-2)
@@ -156,30 +140,25 @@ class RichLogger(val name: String) extends org.slf4j.Logger {
       info(msg)
 
   // warn
-  protected def isWarnEnabled(marker: Marker) = isWarnEnabled
-  protected def warn(marker: Marker, msg: String) = warn(msg)
-  protected def warn(marker: Marker, format: String, arg: Object) = warn(format, arg)
-  protected def warn(marker: Marker, format: String, arg1: Object, arg2: Object) = warn(format, arg1, arg2)
-  protected def warn(marker: Marker, format: String, argArray: Array[AnyRef]) = warn(format, argArray)
-  protected def warn(marker: Marker, msg: String, t: Throwable) = warn(msg, t)
+  override protected def isWarnEnabled(marker: Marker) = isWarnEnabled
   /* @see org.slf4j.Logger#isWarnEnabled() */
   def isWarnEnabled: Boolean = Logging.isWarnEnabled
   def warn(msg: String) = if (Logging.isWarnEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
   def warn(format: String, arg: Object) = if (Logging.isWarnEnabled) {
     val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
   }
   def warn(format: String, arg1: Object, arg2: Object) = if (Logging.isWarnEnabled) {
     val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
   }
-  def warn(format: String, argArray: Array[AnyRef]) = if (Logging.isWarnEnabled) {
+  def warn(format: String, argArray: AnyRef*): Unit = if (Logging.isWarnEnabled) {
     val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
   }
   def warn(msg: String, t: Throwable) = if (Logging.isWarnEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, name, msg, Some(t)))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg, Some(t)))
   def warnWhere(msg: String): Unit = if (Logging.isWarnEnabled)
     if (Logging.isTraceExtraEnabled)
       logWhere(msg, warn, warn)(-2)
@@ -192,31 +171,26 @@ class RichLogger(val name: String) extends org.slf4j.Logger {
       warn(msg)
 
   // error
-  protected def isErrorEnabled(marker: Marker) = isErrorEnabled
-  protected def error(marker: Marker, msg: String) = error(msg)
-  protected def error(marker: Marker, format: String, arg: Object) = error(format, arg)
-  protected def error(marker: Marker, format: String, arg1: Object, arg2: Object) = error(format, arg1, arg2)
-  protected def error(marker: Marker, format: String, argArray: Array[AnyRef]) = error(format, argArray)
-  protected def error(marker: Marker, msg: String, t: Throwable) = error(msg, t)
+  override protected def isErrorEnabled(marker: Marker) = isErrorEnabled
   /* @see org.slf4j.Logger#isErrorEnabled() */
   def isErrorEnabled: Boolean = Logging.isErrorEnabled
   def error(msg: String) = if (Logging.isErrorEnabled)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
   def error(format: String, arg: Object) = if (Logging.isErrorEnabled) {
     val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
   }
   def error(format: String, arg1: Object, arg2: Object) = if (Logging.isErrorEnabled) {
     val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
   }
-  def error(format: String, argArray: Array[AnyRef]) = if (Logging.isErrorEnabled) {
+  def error(format: String, argArray: AnyRef*): Unit = if (Logging.isErrorEnabled) {
     val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, name, msg))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
   }
   // always enabled
   def error(msg: String, t: Throwable) {
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, name, msg, Some(t)))
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg, Some(t)))
   }
   def errorWhere(msg: String): Unit = if (Logging.isErrorEnabled)
     if (Logging.isTraceExtraEnabled)

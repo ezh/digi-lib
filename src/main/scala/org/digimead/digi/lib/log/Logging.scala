@@ -31,8 +31,6 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.Publisher
 import scala.collection.mutable.SynchronizedMap
 
-import org.slf4j.LoggerFactory
-
 trait Logging {
   implicit val log: RichLogger = Logging.getRichLogger(this)
 }
@@ -120,7 +118,11 @@ object Logging extends Publisher[LoggingEvent] {
   def init(arg: Init): Unit = synchronized {
     try {
       if (initializationArgument.get.nonEmpty) {
-        Runtime.getRuntime().removeShutdownHook(shutdownHook)
+        try {
+          Runtime.getRuntime().removeShutdownHook(shutdownHook)
+        } catch {
+          case e =>
+        }
         delLogger(logger.toSeq)
       }
       logPrefix = arg.logPrefix
@@ -156,6 +158,11 @@ object Logging extends Publisher[LoggingEvent] {
     flush()
     delLogger(logger.toSeq)
     queue.clear()
+    try {
+      Runtime.getRuntime().removeShutdownHook(shutdownHook)
+    } catch {
+      case e =>
+    }
   }
   def suspend() = {
     // non blocking check
@@ -244,9 +251,9 @@ object Logging extends Publisher[LoggingEvent] {
   def delLogger(l: Logger) = synchronized {
     if (logger.contains(l)) {
       offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "delete logger " + l))
-      logger = logger - l
       flush
       l.flush
+      logger = logger - l
       l.deinit
     }
   }

@@ -18,8 +18,8 @@
 
 package org.digimead.digi.lib.log
 
-import java.util.Date
 import java.text.SimpleDateFormat
+import java.util.Date
 
 class Record(
   val date: Date,
@@ -65,5 +65,20 @@ object Record {
       new Record(date, tid, level, tag, message, throwable, pid)
     val pid = -1
     val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
+  }
+  class InitWithDiagnosticContext extends Init {
+    val recordBuilder = (date: Date, tid: Long, level: Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
+      new Record(date, tid, level, tag, message + " " + getMDC + getNDC, throwable, pid)
+    val pid = -1
+    val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
+
+    def getMDC() = {
+      val mdc = MDC.getSeq.map(t => t._1 + "=" + t._2).mkString(", ")
+      if (mdc.isEmpty()) mdc else "{" + mdc + "}"
+    }
+    def getNDC() = {
+      val ndc = NDC.getSeq.mkString(", ")
+      if (ndc.isEmpty()) ndc else "{" + ndc + "}"
+    }
   }
 }

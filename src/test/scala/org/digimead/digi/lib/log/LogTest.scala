@@ -39,5 +39,8 @@ class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter {
       override val loggers = Seq(ConsoleLogger)
     })
     thread.join()
+    Logging.resume()
+    Logging.addLogger(ConsoleLogger)
+    Logging.delLogger(ConsoleLogger)
   }
 }
