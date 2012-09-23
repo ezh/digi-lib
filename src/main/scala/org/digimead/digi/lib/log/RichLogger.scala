@@ -52,11 +52,11 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def trace(msg: String) = if (Logging.isTraceEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
 
-  def trace(format: String, arg: Object) = if (Logging.isTraceEnabled) {
+  protected def trace(format: String, arg: Object) = if (Logging.isTraceEnabled) {
     val msg = format.format(arg)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
   }
-  def trace(format: String, arg1: Object, arg2: Object) = if (Logging.isTraceEnabled) {
+  protected def trace(format: String, arg1: Object, arg2: Object) = if (Logging.isTraceEnabled) {
     val msg = format.format(arg1, arg2)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
   }
@@ -83,11 +83,11 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def isDebugEnabled(): Boolean = Logging.isDebugEnabled
   def debug(msg: String) = if (Logging.isDebugEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
-  def debug(format: String, arg: Object) = if (Logging.isDebugEnabled) {
+  protected def debug(format: String, arg: Object) = if (Logging.isDebugEnabled) {
     val msg = format.format(arg)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
   }
-  def debug(format: String, arg1: Object, arg2: Object) = if (Logging.isDebugEnabled) {
+  protected def debug(format: String, arg1: Object, arg2: Object) = if (Logging.isDebugEnabled) {
     val msg = format.format(arg1, arg2)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
   }
@@ -114,11 +114,11 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def isInfoEnabled: Boolean = Logging.isInfoEnabled
   def info(msg: String) = if (Logging.isInfoEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
-  def info(format: String, arg: Object) = if (Logging.isInfoEnabled) {
+  protected def info(format: String, arg: Object) = if (Logging.isInfoEnabled) {
     val msg = format.format(arg)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
   }
-  def info(format: String, arg1: Object, arg2: Object) = if (Logging.isInfoEnabled) {
+  protected def info(format: String, arg1: Object, arg2: Object) = if (Logging.isInfoEnabled) {
     val msg = format.format(arg1, arg2)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
   }
@@ -145,11 +145,11 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def isWarnEnabled: Boolean = Logging.isWarnEnabled
   def warn(msg: String) = if (Logging.isWarnEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
-  def warn(format: String, arg: Object) = if (Logging.isWarnEnabled) {
+  protected def warn(format: String, arg: Object) = if (Logging.isWarnEnabled) {
     val msg = format.format(arg)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
   }
-  def warn(format: String, arg1: Object, arg2: Object) = if (Logging.isWarnEnabled) {
+  protected def warn(format: String, arg1: Object, arg2: Object) = if (Logging.isWarnEnabled) {
     val msg = format.format(arg1, arg2)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
   }
@@ -176,11 +176,11 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def isErrorEnabled: Boolean = Logging.isErrorEnabled
   def error(msg: String) = if (Logging.isErrorEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
-  def error(format: String, arg: Object) = if (Logging.isErrorEnabled) {
+  protected def error(format: String, arg: Object) = if (Logging.isErrorEnabled) {
     val msg = format.format(arg)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
   }
-  def error(format: String, arg1: Object, arg2: Object) = if (Logging.isErrorEnabled) {
+  protected def error(format: String, arg1: Object, arg2: Object) = if (Logging.isErrorEnabled) {
     val msg = format.format(arg1, arg2)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
   }
