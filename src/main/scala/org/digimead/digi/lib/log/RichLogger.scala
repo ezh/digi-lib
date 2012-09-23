@@ -19,12 +19,15 @@
 package org.digimead.digi.lib.log
 
 import java.util.Date
+
 import scala.annotation.implicitNotFound
+
 import org.slf4j.Marker
 import org.slf4j.helpers.MarkerIgnoringBase
+import org.slf4j.helpers.MessageFormatter
 
 @implicitNotFound(msg = "please define implicit RichLogger")
-class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
+class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase with java.io.Serializable {
   override def getName(): String = loggerName
   // fast look while development, highlight it in your IDE
   def ___gaze(msg: String) {
@@ -53,16 +56,16 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
 
   protected def trace(format: String, arg: Object) = if (Logging.isTraceEnabled) {
-    val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, ft.getMessage))
   }
   protected def trace(format: String, arg1: Object, arg2: Object) = if (Logging.isTraceEnabled) {
-    val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg1, arg2)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, ft.getMessage))
   }
-  def trace(format: String, argArray: AnyRef*): Unit = if (Logging.isTraceEnabled) {
-    val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg))
+  def trace(format: String, arguments: Object*): Unit = if (Logging.isTraceEnabled) {
+    val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, ft.getMessage))
   }
   def trace(msg: String, t: Throwable) = if (Logging.isTraceEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName, msg, Some(t)))
@@ -84,16 +87,16 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def debug(msg: String) = if (Logging.isDebugEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
   protected def debug(format: String, arg: Object) = if (Logging.isDebugEnabled) {
-    val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, ft.getMessage))
   }
   protected def debug(format: String, arg1: Object, arg2: Object) = if (Logging.isDebugEnabled) {
-    val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg1, arg2)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, ft.getMessage))
   }
-  def debug(format: String, argArray: AnyRef*): Unit = if (Logging.isDebugEnabled) {
-    val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg))
+  def debug(format: String, arguments: Object*): Unit = if (Logging.isDebugEnabled) {
+    val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, ft.getMessage))
   }
   def debug(msg: String, t: Throwable) = if (Logging.isDebugEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName, msg, Some(t)))
@@ -115,16 +118,16 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def info(msg: String) = if (Logging.isInfoEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
   protected def info(format: String, arg: Object) = if (Logging.isInfoEnabled) {
-    val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, ft.getMessage))
   }
   protected def info(format: String, arg1: Object, arg2: Object) = if (Logging.isInfoEnabled) {
-    val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg1, arg2)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, ft.getMessage))
   }
-  def info(format: String, argArray: AnyRef*): Unit = if (Logging.isInfoEnabled) {
-    val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg))
+  def info(format: String, arguments: Object*): Unit = if (Logging.isInfoEnabled) {
+    val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, ft.getMessage()))
   }
   def info(msg: String, t: Throwable) = if (Logging.isInfoEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName, msg, Some(t)))
@@ -146,16 +149,16 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def warn(msg: String) = if (Logging.isWarnEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
   protected def warn(format: String, arg: Object) = if (Logging.isWarnEnabled) {
-    val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, ft.getMessage))
   }
   protected def warn(format: String, arg1: Object, arg2: Object) = if (Logging.isWarnEnabled) {
-    val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg1, arg2)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, ft.getMessage))
   }
-  def warn(format: String, argArray: AnyRef*): Unit = if (Logging.isWarnEnabled) {
-    val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg))
+  def warn(format: String, arguments: Object*): Unit = if (Logging.isWarnEnabled) {
+    val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, ft.getMessage))
   }
   def warn(msg: String, t: Throwable) = if (Logging.isWarnEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName, msg, Some(t)))
@@ -177,16 +180,16 @@ class RichLogger(val loggerName: java.lang.String) extends MarkerIgnoringBase {
   def error(msg: String) = if (Logging.isErrorEnabled)
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
   protected def error(format: String, arg: Object) = if (Logging.isErrorEnabled) {
-    val msg = format.format(arg)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, ft.getMessage))
   }
   protected def error(format: String, arg1: Object, arg2: Object) = if (Logging.isErrorEnabled) {
-    val msg = format.format(arg1, arg2)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
+    val ft = MessageFormatter.format(format, arg1, arg2)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, ft.getMessage))
   }
-  def error(format: String, argArray: AnyRef*): Unit = if (Logging.isErrorEnabled) {
-    val msg = format.format(argArray: _*)
-    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, msg))
+  def error(format: String, arguments: Object*): Unit = if (Logging.isErrorEnabled) {
+    val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
+    Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName, ft.getMessage))
   }
   // always enabled
   def error(msg: String, t: Throwable) {

@@ -32,7 +32,9 @@ import scala.collection.mutable.Publisher
 import scala.collection.mutable.SynchronizedMap
 
 trait Logging {
-  implicit val log: RichLogger = Logging.getRichLogger(this)
+  /** always call Logging.getRichLogger, even after deserialization */
+  @transient
+  implicit lazy val log: RichLogger = Logging.getRichLogger(this)
 }
 
 sealed trait LoggingEvent

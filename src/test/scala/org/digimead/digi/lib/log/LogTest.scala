@@ -18,12 +18,16 @@
 
 package org.digimead.digi.lib.log
 
-import java.util.Date
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers._
+import org.scalatest.matchers.ShouldMatchers
 
-class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter {
+class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter with ShouldMatchers {
 
   test("logging initialization via Record & Logging") {
     val thread = new Thread {
@@ -43,4 +47,22 @@ class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter {
     Logging.addLogger(ConsoleLogger)
     Logging.delLogger(ConsoleLogger)
   }
+
+  test("serializable") {
+    assert(A.nameA === A.nameB)
+  }
+}
+
+object A {
+  class A extends Logging with java.io.Serializable
+  val a = new A
+  val bos = new ByteArrayOutputStream()
+  val out = new ObjectOutputStream(bos)
+  out.writeObject(a)
+  val saved = bos.toByteArray()
+  val bis = new ByteArrayInputStream(saved)
+  val in = new ObjectInputStream(bis)
+  val b = in.readObject()
+  val nameA = a.log.getName
+  val nameB = b.asInstanceOf[A].log.getName
 }
