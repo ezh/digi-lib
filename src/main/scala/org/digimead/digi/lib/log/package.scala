@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- * 
+ *
  * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,9 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log
+package org.digimead.digi.lib
 
-object ConsoleLogger extends Logger {
-  val LINE_SEPARATOR = System.getProperty("line.separator")
-  protected var f = (records: Array[Record]) => synchronized {
-    records.foreach(r => {
-      System.err.println(r.toString())
-      r.throwable.foreach(t => System.err.print(try {
-        "\n" + t.getStackTraceString
-      } catch {
-        case e =>
-          "stack trace \"" + t.getMessage + "\" unaviable "
-      }))
-    })
-    System.err.flush()
-  }
-  override def flush() = System.err.flush()
+package object log {
+  @volatile var LoggingInitializationArgument: Option[Logging.Init] = Some(new Logging.DefaultInit)
+  @volatile var RecordInitializationArgument: Option[Record.Init] = Some(new Record.DefaultInit)
 }

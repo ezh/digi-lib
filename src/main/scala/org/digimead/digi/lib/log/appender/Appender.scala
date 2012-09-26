@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- *
+ * 
  * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,17 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log
+package org.digimead.digi.lib.log.appender
 
-import org.slf4j.ILoggerFactory
+import org.digimead.digi.lib.log.Logging
+import org.digimead.digi.lib.log.Record
 
-class LoggerFactory extends ILoggerFactory {
-  def getLogger(name: String): org.slf4j.Logger = Logging.getRichLogger(name)
+trait Appender {
+  protected var f: (Array[Record]) => Unit
+  def init(args: Logging.Init) {}
+  def apply(r: Array[Record]) = f(r)
+  def deinit() {}
+  def flush() {}
+  def getF() = synchronized { f }
+  def setF(_f: (Array[Record]) => Unit) = synchronized { f = _f }
 }

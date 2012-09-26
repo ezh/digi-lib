@@ -36,6 +36,9 @@ object Record {
   private var recordBuilder: (Date, Long, Level, String, String, Option[Throwable], Int) => Record = null
   private var pid = -1
   private var dateFormat: SimpleDateFormat = null
+
+  RecordInitializationArgument.foreach(init)
+
   def apply(date: Date, tid: Long, level: Level, tag: String, message: String) =
     recordBuilder(date, tid, level, tag, message, None, pid)
   def apply(date: Date, tid: Long, level: Level, tag: String, message: String, throwable: Option[Throwable]) =

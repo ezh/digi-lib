@@ -18,6 +18,7 @@
 
 package org.digimead.digi.lib.log
 
+import java.lang.Thread
 import java.util.Date
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
@@ -31,15 +32,19 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.Publisher
 import scala.collection.mutable.SynchronizedMap
 
+import org.digimead.digi.lib.log.appender.Appender
+import org.digimead.digi.lib.log.logger.RichLogger
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
+import org.slf4j.{ LoggerFactory => OriginalLoggerFactory }
+import org.slf4j.impl.StaticLoggerBinder
+
 trait Logging {
-  /** always call Logging.getRichLogger, even after deserialization */
+  /** always call Logging.getRich, even after deserialization */
   @transient
   implicit lazy val log: RichLogger = Logging.getRichLogger(this)
 }
 
-sealed trait LoggingEvent
-
-object Logging extends Publisher[LoggingEvent] {
+object Logging {
   private var logPrefix = "@" // prefix for all adb logcat TAGs, everyone may change (but should not) it on his/her own risk
   private[log] var isTraceExtraEnabled = false
   private[log] var isTraceEnabled = true
@@ -50,18 +55,23 @@ object Logging extends Publisher[LoggingEvent] {
   private var loggingThread = new Thread() // stub
   private var richLoggerBuilder: (String) => RichLogger = null
   private var flushLimit = 1000
-  private var logger = new HashSet[Logger]()
+  private var appender = new HashSet[Appender]()
   private var shutdownHook: Thread = null
   private val queue = new ConcurrentLinkedQueue[Record]
   private val richLogger = new HashMap[String, RichLogger]() with SynchronizedMap[String, RichLogger]
   private val initializationArgument = new AtomicReference[Option[Init]](None)
   private val loggingThreadRecords = new Array[Record](flushLimit)
   lazy val commonLogger: RichLogger = {
-    val name = "@~*~*~*~*"
-    val logger = new RichLogger(name)
+    val name = if (StaticLoggerBinder.getSingleton().getLoggerFactoryClassStr() == "org.digimead.digi.lib.log.LoggerFactory")
+      "@~*~*~*~*"
+    else
+      getClass.getName()
+    val logger = new RichLogger(OriginalLoggerFactory.getLogger(name))
     richLogger(name) = logger
     logger
   }
+
+  LoggingInitializationArgument.foreach(init)
 
   def setTraceEnabled(t: Boolean) = synchronized {
     Logging.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Info, commonLogger.getName, if (t)
@@ -102,7 +112,7 @@ object Logging extends Publisher[LoggingEvent] {
     queue.offer(record)
     queue.notifyAll
     try {
-      publish(new Event.Incoming(record))
+      Event.publish(new Event.Incoming(record))
     } catch {
       case e =>
         queue.offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName,
@@ -125,7 +135,7 @@ object Logging extends Publisher[LoggingEvent] {
         } catch {
           case e =>
         }
-        delLogger(logger.toSeq)
+        delAppender(appender.toSeq)
       }
       logPrefix = arg.logPrefix
       isTraceExtraEnabled = arg.isTraceExtraEnabled
@@ -137,15 +147,24 @@ object Logging extends Publisher[LoggingEvent] {
       richLoggerBuilder = arg.richLoggerBuilder
       flushLimit = arg.flushLimit
       shutdownHook = arg.shutdownHook
-      Runtime.getRuntime().addShutdownHook(shutdownHook)
-      if (initializationArgument.get.nonEmpty)
-        resume
-      offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "initialize logging"))
-      initializationArgument.synchronized {
-        initializationArgument.set(Some(arg))
-        initializationArgument.notifyAll()
+      if (StaticLoggerBinder.getSingleton().getLoggerFactoryClassStr() == "org.digimead.digi.lib.log.LoggerFactory") {
+        Runtime.getRuntime().addShutdownHook(shutdownHook)
+        if (initializationArgument.get.nonEmpty)
+          resume
+        offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName,
+          "initialize logging for internal slf4j logger with " + arg))
+        initializationArgument.synchronized {
+          initializationArgument.set(Some(arg))
+          initializationArgument.notifyAll()
+        }
+        addAppender(arg.appenders)
+      } else {
+        commonLogger.debug("initialize logging for external slf4j logger with " + arg)
+        initializationArgument.synchronized {
+          initializationArgument.set(Some(arg))
+          initializationArgument.notifyAll()
+        }
       }
-      addLogger(arg.loggers)
     } catch {
       case e => try {
         System.err.println(e.getMessage + "\n" + e.getStackTraceString)
@@ -158,7 +177,7 @@ object Logging extends Publisher[LoggingEvent] {
   private[lib] def deinit(): Unit = synchronized {
     offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "deinitialize logging"))
     flush()
-    delLogger(logger.toSeq)
+    delAppender(appender.toSeq)
     queue.clear()
     try {
       Runtime.getRuntime().removeShutdownHook(shutdownHook)
@@ -183,7 +202,7 @@ object Logging extends Publisher[LoggingEvent] {
             this.setDaemon(true)
             @tailrec
             override def run() = {
-              if (logger.nonEmpty && !queue.isEmpty) {
+              if (appender.nonEmpty && !queue.isEmpty) {
                 flushQueue(flushLimit)
                 Thread.sleep(50)
               } else
@@ -197,10 +216,10 @@ object Logging extends Publisher[LoggingEvent] {
       }
   }
   def flush(): Int = synchronized {
-    if (logger.isEmpty)
+    if (appender.isEmpty)
       return -1
     val flushed = flushQueue()
-    logger.foreach(_.flush)
+    appender.foreach(_.flush)
     flushed
   }
   private def flushQueue(): Int = flushQueue(Int.MaxValue)
@@ -212,7 +231,7 @@ object Logging extends Publisher[LoggingEvent] {
       while (records < limit && !queue.isEmpty()) {
         loggingThreadRecords(records) = queue.poll().asInstanceOf[Record]
         try {
-          publish(new Event.Outgoing(loggingThreadRecords(records)))
+          Event.publish(new Event.Outgoing(loggingThreadRecords(records)))
         } catch {
           case e =>
             offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName,
@@ -223,7 +242,7 @@ object Logging extends Publisher[LoggingEvent] {
         }
         records += 1
       }
-      logger.foreach(_(loggingThreadRecords.take(records)))
+      appender.foreach(_(loggingThreadRecords.take(records)))
     }
     if (records == flushLimit) {
       if (records == n)
@@ -234,32 +253,32 @@ object Logging extends Publisher[LoggingEvent] {
     flushQueue(n, accumulator + records)
   }
   def dump() =
-    ("queue size: " + queue.size + ", loggers: " + logger.mkString(",") + " thread: " + loggingThread.isAlive) +: queue.toArray.map(_.toString)
-  def addLogger(s: Seq[Logger]): Unit =
-    synchronized { s.foreach(l => addLogger(l, false)) }
-  def addLogger(s: Seq[Logger], force: Boolean): Unit =
-    synchronized { s.foreach(l => addLogger(l, force)) }
-  def addLogger(l: Logger): Unit =
-    synchronized { addLogger(l, false) }
-  def addLogger(l: Logger, force: Boolean): Unit = synchronized {
-    if (!logger.contains(l) || force) {
-      initializationArgument.get.foreach(l.init)
-      logger = logger + l
-      offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "add logger " + l))
+    ("queue size: " + queue.size + ", appenders: " + appender.mkString(",") + " thread: " + loggingThread.isAlive) +: queue.toArray.map(_.toString)
+  def addAppender(s: Seq[Appender]): Unit =
+    synchronized { s.foreach(a => addAppender(a, false)) }
+  def addAppender(s: Seq[Appender], force: Boolean): Unit =
+    synchronized { s.foreach(a => addAppender(a, force)) }
+  def addAppender(a: Appender): Unit =
+    synchronized { addAppender(a, false) }
+  def addAppender(a: Appender, force: Boolean): Unit = synchronized {
+    if (!appender.contains(a) || force) {
+      initializationArgument.get.foreach(a.init)
+      appender = appender + a
+      offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "add appender " + a))
     }
   }
-  def delLogger(s: Seq[Logger]): Unit =
-    synchronized { s.foreach(l => delLogger(l)) }
-  def delLogger(l: Logger) = synchronized {
-    if (logger.contains(l)) {
-      offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "delete logger " + l))
+  def delAppender(s: Seq[Appender]): Unit =
+    synchronized { s.foreach(a => delAppender(a)) }
+  def delAppender(a: Appender) = synchronized {
+    if (appender.contains(a)) {
+      offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "delete appender " + a))
       flush
-      l.flush
-      logger = logger - l
-      l.deinit
+      a.flush
+      appender = appender - a
+      a.deinit
     }
   }
-  def getLoggers() = synchronized { logger.toSeq }
+  def getAppenders() = synchronized { appender.toSeq }
   def getRichLogger(obj: Logging): RichLogger = {
     val stackArray = Thread.currentThread.getStackTrace().dropWhile(_.getClassName != getClass.getName)
     val stack = if (stackArray(1).getFileName != stackArray(0).getFileName)
@@ -285,10 +304,11 @@ object Logging extends Publisher[LoggingEvent] {
             initializationArgument.wait()
         val newLogger = richLoggerBuilder(name)
         richLogger(name) = newLogger
+        Event.publish(new Event.RegisterLogger(newLogger))
         newLogger
       }
     }
-  def findRichLogger(f: ((String, RichLogger)) => Boolean): Option[(String, RichLogger)] =
+  def findRich(f: ((String, RichLogger)) => Boolean): Option[(String, RichLogger)] =
     richLogger.find(f)
 
   trait Init {
@@ -302,7 +322,7 @@ object Logging extends Publisher[LoggingEvent] {
     val shutdownHook: Thread
     val richLoggerBuilder: (String) => RichLogger
     val flushLimit: Int
-    val loggers: Seq[Logger]
+    val appenders: Seq[Appender]
   }
   class DefaultInit extends Init {
     val logPrefix = "@" // prefix for all adb logcat TAGs, everyone may change (but should not) it on his/her own risk
@@ -313,13 +333,22 @@ object Logging extends Publisher[LoggingEvent] {
     val isWarnEnabled = true
     val isErrorEnabled = true
     val shutdownHook = new Thread() { override def run() = deinit }
-    val richLoggerBuilder = (name) => new RichLogger(name)
+    val richLoggerBuilder = (name: String) => new RichLogger(OriginalLoggerFactory.getLogger(name))
     val flushLimit = 1000
-    val loggers = Seq[Logger]()
+    val appenders = Seq[Appender]()
+    override def toString = "DefaultInit"
   }
-  object Event {
-    class Incoming(val record: Record) extends LoggingEvent
-    class Outgoing(val record: Record) extends LoggingEvent
+  sealed trait Event
+  object Event extends Publisher[Event] {
+    override protected[Logging] def publish(event: Event) = try {
+      super.publish(event)
+    } catch {
+      case e =>
+        Logging.commonLogger.error(e.getMessage(), e)
+    }
+    case class Incoming(val record: Record) extends Event
+    case class Outgoing(val record: Record) extends Event
+    case class RegisterLogger(val logger: RichLogger) extends Event
   }
   object Where {
     val ALL = -1

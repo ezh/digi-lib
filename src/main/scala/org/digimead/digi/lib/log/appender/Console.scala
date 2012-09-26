@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- * 
+ *
  * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +16,22 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log
+package org.digimead.digi.lib.log.appender
 
-trait Logger {
-  protected var f: (Array[Record]) => Unit
-  def init(args: Logging.Init) {}
-  def apply(r: Array[Record]) = f(r)
-  def deinit() {}
-  def flush() {}
-  def getF() = synchronized { f }
-  def setF(_f: (Array[Record]) => Unit) = synchronized { f = _f }
+import org.digimead.digi.lib.log.Record
+
+object Console extends Appender {
+  protected var f = (records: Array[Record]) => synchronized {
+    records.foreach(r => {
+      System.err.println(r.toString())
+      r.throwable.foreach(t => System.err.print(try {
+        "\n" + t.getStackTraceString
+      } catch {
+        case e =>
+          "stack trace \"" + t.getMessage + "\" unaviable "
+      }))
+    })
+    System.err.flush()
+  }
+  override def flush() = System.err.flush()
 }

@@ -18,51 +18,29 @@
 
 package org.digimead.digi.lib.log
 
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
+import scala.annotation.implicitNotFound
 
+import org.digimead.digi.lib.log.logger.RichLogger
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
+class MyLoggingInit extends Logging.DefaultInit {
+  override def toString = "MyLoggingInit"
+}
+
 class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter with ShouldMatchers {
-
-  test("logging initialization via Record & Logging") {
-    val thread = new Thread {
-      override def run {
-        val testClass = new Logging() {
-          log.debug("hello")
-        }
-      }
+  test("test Log4j binding over slf4j with RichLogger from Logging trait1") {
+    LoggingInitializationArgument = Some(new MyLoggingInit)
+    org.apache.log4j.BasicConfigurator.configure();
+    class Test extends Logging {
+      log.debug("hello")
     }
-    thread.start
-    Record.init(new Record.DefaultInit)
-    Logging.init(new Logging.DefaultInit {
-      override val loggers = Seq(ConsoleLogger)
-    })
-    thread.join()
-    Logging.resume()
-    Logging.addLogger(ConsoleLogger)
-    Logging.delLogger(ConsoleLogger)
-  }
-
-  test("serializable") {
-    assert(A.nameA === A.nameB)
+    val test = new Test
+    test.log.___glance("start")
+    test.log.isInstanceOf[RichLogger] should be(true)
+    test.log.base.isInstanceOf[org.slf4j.impl.Log4jLoggerAdapter] should be(true)
   }
 }
 
-object A {
-  class A extends Logging with java.io.Serializable
-  val a = new A
-  val bos = new ByteArrayOutputStream()
-  val out = new ObjectOutputStream(bos)
-  out.writeObject(a)
-  val saved = bos.toByteArray()
-  val bis = new ByteArrayInputStream(saved)
-  val in = new ObjectInputStream(bis)
-  val b = in.readObject()
-  val nameA = a.log.getName
-  val nameB = b.asInstanceOf[A].log.getName
-}

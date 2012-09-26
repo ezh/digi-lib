@@ -20,6 +20,7 @@ package org.digimead.digi.lib.log
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.HashMap
+
 import org.slf4j.spi.MDCAdapter
 
 class MDC extends MDCAdapter {
