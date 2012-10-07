@@ -1,6 +1,8 @@
 /**
  * Digi-Lib - base library for Digi components
  *
+ * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,26 +18,29 @@
 
 package org.digimead.digi.lib.log
 
-import java.util.Date
+import scala.annotation.implicitNotFound
+
+import org.digimead.digi.lib.log.logger.RichLogger
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers._
+import org.scalatest.matchers.ShouldMatchers
 
-class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter {
+class MyLoggingInit extends Logging.DefaultInit {
+  override def toString = "MyLoggingInit"
+}
 
-  test("logging initialization via Record & Logging") {
-    val thread = new Thread {
-      override def run {
-        val testClass = new Logging() {
-          log.debug("hello")
-        }
-      }
+class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter with ShouldMatchers {
+  test("test Log4j binding over slf4j with RichLogger from Logging trait1") {
+    LoggingInitializationArgument = Some(new MyLoggingInit)
+    org.apache.log4j.BasicConfigurator.configure();
+    class Test extends Logging {
+      log.debug("hello")
     }
-    thread.start
-    Record.init(new Record.DefaultInit)
-    Logging.init(new Logging.DefaultInit {
-      override val loggers = Seq(ConsoleLogger)
-    })
-    thread.join()
+    val test = new Test
+    test.log.___glance("start")
+    test.log.isInstanceOf[RichLogger] should be(true)
+    test.log.base.isInstanceOf[org.slf4j.impl.Log4jLoggerAdapter] should be(true)
   }
 }
+

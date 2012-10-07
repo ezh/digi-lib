@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<!--
+
+ Digi-Lib - base library for Digi components
+
+ Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+-->
+<language id="digi" _name="Digi" version="2.0" _section="Others">
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="character" _name="Character" map-to="def:string"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+    <style id="function" _name="Function" map-to="def:function"/>
+    <style id="decimal" _name="Decimal" map-to="def:decimal"/>
+    <style id="class" _name="Class" map-to="def:doc-comment-element"/>
+    <style id="debug" _name="Debug" map-to="def:function"/>
+    <style id="info" _name="Info" map-to="def:character"/>
+    <style id="warn" _name="Warn" map-to="def:note"/>
+    <style id="error" _name="Error" map-to="def:error"/>
+  </styles>
+
+  <default-regex-options case-sensitive="false"/>
+
+  <definitions>
+    <context id="character" style-ref="character">
+      <match>\'(\\[trnb\\\'\"]|[^\\])\'</match>
+    </context>
+    <context id="trace-keyword" style-ref="comment">
+      <keyword>enteringMethod</keyword>
+      <keyword>leavingMethod</keyword>
+    </context>
+    <context id="keyword" style-ref="keyword">
+      <keyword>alive</keyword>
+      <keyword>IAmBusy</keyword>
+      <keyword>IAmReady</keyword>
+      <keyword>IAmMumble</keyword>
+      <keyword>IAmWarn</keyword>
+      <keyword>IAmYell</keyword>
+    </context>
+    <context id="decimal" style-ref="decimal">
+      <match>\b[0-9]+\b</match>
+    </context>
+    <context id="debug" style-ref="debug">
+      <match> D </match>
+    </context>
+    <context id="info" style-ref="info">
+      <match> I </match>
+    </context>
+    <context id="warn" style-ref="warn">
+      <match> W </match>
+    </context>
+    <context id="error" style-ref="error">
+      <match> E </match>
+    </context>
+    <context id="header" end-at-line-end="true">
+      <start>^[^\s]+ [^\s]+</start>
+      <end>@[^\s]+:</end>
+      <include>
+        <context sub-pattern="0" where="start" style-ref="class"/>
+        <context sub-pattern="0" where="end" style-ref="def:preprocessor"/>
+        <context ref="debug"/>
+        <context ref="info"/>
+        <context ref="warn"/>
+        <context ref="error"/>
+      </include>
+    </context>
+    <context id="footer" end-at-line-end="true" style-ref="class">
+      <start>{</start>
+      <end>}</end>
+    </context>
+
+    <context id="digi">
+      <include>
+        <context ref="header"/>
+        <context ref="def:shell-like-comment"/>
+        <context ref="def:string"/>
+        <context ref="character"/>
+        <context ref="keyword"/>
+        <context ref="trace-keyword"/>
+        <context ref="decimal"/>
+        <context ref="footer"/>
+      </include>
+    </context>
+  </definitions>
+
+</language>
