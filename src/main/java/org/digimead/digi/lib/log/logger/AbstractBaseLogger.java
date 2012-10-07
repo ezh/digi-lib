@@ -90,7 +90,7 @@ abstract class AbstractBaseLogger extends MarkerIgnoringBase implements
 	 */
 	public void trace(String format, Object... argArray) {
 		if (isTraceEnabled()) {
-			if (argArray.length == 1 && argArray instanceof Object[]) {
+			if (argArray.length == 1 && argArray[0] instanceof Object[]) {
 				// some crazy behavior from Log4jLoggerAdapter(Ceki
 				// G&uuml;lc&uuml;) That man override 'Object ...' with
 				// 'Object[]'
@@ -165,7 +165,7 @@ abstract class AbstractBaseLogger extends MarkerIgnoringBase implements
 	 */
 	public void debug(String format, Object... argArray) {
 		if (isDebugEnabled()) {
-			if (argArray.length == 1 && argArray instanceof Object[]) {
+			if (argArray.length == 1 && argArray[0] instanceof Object[]) {
 				// some crazy behavior from Log4jLoggerAdapter(Ceki
 				// G&uuml;lc&uuml;) That man override 'Object ...' with
 				// 'Object[]'
@@ -240,7 +240,7 @@ abstract class AbstractBaseLogger extends MarkerIgnoringBase implements
 	 */
 	public void info(String format, Object... argArray) {
 		if (isInfoEnabled()) {
-			if (argArray.length == 1 && argArray instanceof Object[]) {
+			if (argArray.length == 1 && argArray[0] instanceof Object[]) {
 				// some crazy behavior from Log4jLoggerAdapter(Ceki
 				// G&uuml;lc&uuml;) That man override 'Object ...' with
 				// 'Object[]'
@@ -315,7 +315,7 @@ abstract class AbstractBaseLogger extends MarkerIgnoringBase implements
 	 */
 	public void warn(String format, Object... argArray) {
 		if (isWarnEnabled()) {
-			if (argArray.length == 1 && argArray instanceof Object[]) {
+			if (argArray.length == 1 && argArray[0] instanceof Object[]) {
 				// some crazy behavior from Log4jLoggerAdapter(Ceki
 				// G&uuml;lc&uuml;) That man override 'Object ...' with
 				// 'Object[]'
@@ -390,7 +390,7 @@ abstract class AbstractBaseLogger extends MarkerIgnoringBase implements
 	 */
 	public void error(String format, Object... argArray) {
 		if (isErrorEnabled()) {
-			if (argArray.length == 1 && argArray instanceof Object[]) {
+			if (argArray.length == 1 && argArray[0] instanceof Object[]) {
 				// some crazy behavior from Log4jLoggerAdapter(Ceki
 				// G&uuml;lc&uuml;) That man override 'Object ...' with
 				// 'Object[]'

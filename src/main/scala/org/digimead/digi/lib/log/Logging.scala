@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 import scala.Array.canBuildFrom
 import scala.Option.option2Iterable
-import scala.annotation.implicitNotFound
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.HashMap
@@ -35,8 +34,7 @@ import scala.collection.mutable.SynchronizedMap
 import org.digimead.digi.lib.log.appender.Appender
 import org.digimead.digi.lib.log.logger.RichLogger
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
-import org.slf4j.{ LoggerFactory => OriginalLoggerFactory }
-import org.slf4j.impl.StaticLoggerBinder
+import org.slf4j.LoggerFactory
 
 trait Logging {
   /** always call Logging.getRich, even after deserialization */
@@ -62,7 +60,7 @@ object Logging {
   private val initializationArgument = new AtomicReference[Option[Init]](None)
   private val loggingThreadRecords = new Array[Record](flushLimit)
   lazy val commonLogger: RichLogger = {
-    val name = if (StaticLoggerBinder.getSingleton().getLoggerFactoryClassStr() == "org.digimead.digi.lib.log.LoggerFactory")
+    val name = if (LoggerFactory.getILoggerFactory.getClass.getName() == "org.digimead.digi.lib.log.LoggerFactory")
       "@~*~*~*~*"
     else
       getClass.getName()
@@ -147,7 +145,7 @@ object Logging {
       richLoggerBuilder = arg.richLoggerBuilder
       flushLimit = arg.flushLimit
       shutdownHook = arg.shutdownHook
-      if (StaticLoggerBinder.getSingleton().getLoggerFactoryClassStr() == "org.digimead.digi.lib.log.LoggerFactory") {
+      if (LoggerFactory.getILoggerFactory.getClass.getName() == "org.digimead.digi.lib.log.LoggerFactory") {
         Runtime.getRuntime().addShutdownHook(shutdownHook)
         if (initializationArgument.get.nonEmpty)
           resume
