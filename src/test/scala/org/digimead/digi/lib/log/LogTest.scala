@@ -18,26 +18,29 @@
 
 package org.digimead.digi.lib.log
 
-import java.util.Date
+import scala.annotation.implicitNotFound
+
+import org.digimead.digi.lib.log.logger.RichLogger
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers._
+import org.scalatest.matchers.ShouldMatchers
 
-class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter {
+class MyLoggingInit extends Logging.DefaultInit {
+  override def toString = "MyLoggingInit"
+}
 
-  test("logging initialization via Record & Logging") {
-    val thread = new Thread {
-      override def run {
-        val testClass = new Logging() {
-          log.debug("hello")
-        }
-      }
+class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter with ShouldMatchers {
+  test("test Log4j binding over slf4j with RichLogger from Logging trait1") {
+    LoggingInitializationArgument = Some(new MyLoggingInit)
+    org.apache.log4j.BasicConfigurator.configure();
+    class Test extends Logging {
+      log.debug("hello")
     }
-    thread.start
-    Record.init(new Record.DefaultInit)
-    Logging.init(new Logging.DefaultInit {
-      override val loggers = Seq(ConsoleLogger)
-    })
-    thread.join()
+    val test = new Test
+    test.log.___glance("start")
+    test.log.isInstanceOf[RichLogger] should be(true)
+    test.log.base.isInstanceOf[org.slf4j.impl.Log4jLoggerAdapter] should be(true)
   }
 }
+
