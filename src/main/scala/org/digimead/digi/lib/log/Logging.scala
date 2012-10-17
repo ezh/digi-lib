@@ -25,11 +25,14 @@ import java.util.concurrent.atomic.AtomicReference
 
 import scala.Array.canBuildFrom
 import scala.Option.option2Iterable
+import scala.annotation.implicitNotFound
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Publisher
 import scala.collection.mutable.SynchronizedMap
+import scala.util.control.Breaks.break
+import scala.util.control.Breaks.breakable
 
 import org.digimead.digi.lib.log.appender.Appender
 import org.digimead.digi.lib.log.logger.RichLogger
@@ -43,6 +46,7 @@ trait Logging {
 }
 
 object Logging {
+  private var buffered = false
   private var logPrefix = "@" // prefix for all adb logcat TAGs, everyone may change (but should not) it on his/her own risk
   private[log] var isTraceExtraEnabled = false
   private[log] var isTraceEnabled = true
@@ -59,16 +63,16 @@ object Logging {
   private val richLogger = new HashMap[String, RichLogger]() with SynchronizedMap[String, RichLogger]
   private val initializationArgument = new AtomicReference[Option[Init]](None)
   private val loggingThreadRecords = new Array[Record](flushLimit)
-  lazy val commonLogger: RichLogger = {
-    val name = if (LoggerFactory.getILoggerFactory.getClass.getName() == "org.digimead.digi.lib.log.LoggerFactory")
-      "@~*~*~*~*"
-    else
-      getClass.getName()
+  val commonLogger: RichLogger = {
+    val name = if (buffered) "@~*~*~*~*" else getClass.getName()
     val logger = new RichLogger(LoggerFactory.getLogger(name))
     richLogger(name) = logger
     logger
   }
 
+  // initialize LoggerFactory singleton if any
+  LoggerFactory.getILoggerFactory
+  // initialize Logging
   LoggingInitializationArgument.foreach(init)
 
   def setTraceEnabled(t: Boolean) = synchronized {
@@ -135,6 +139,7 @@ object Logging {
         }
         delAppender(appender.toSeq)
       }
+      buffered = arg.buffered
       logPrefix = arg.logPrefix
       isTraceExtraEnabled = arg.isTraceExtraEnabled
       isTraceEnabled = arg.isTraceEnabled
@@ -145,19 +150,19 @@ object Logging {
       richLoggerBuilder = arg.richLoggerBuilder
       flushLimit = arg.flushLimit
       shutdownHook = arg.shutdownHook
-      if (LoggerFactory.getILoggerFactory.getClass.getName() == "org.digimead.digi.lib.log.LoggerFactory") {
-        Runtime.getRuntime().addShutdownHook(shutdownHook)
+      Runtime.getRuntime().addShutdownHook(shutdownHook)
+      if (buffered) {
         if (initializationArgument.get.nonEmpty)
           resume
         offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName,
-          "initialize logging for internal slf4j logger with " + arg))
+          "initialize logging with buffered slf4j logger, init: " + arg))
         initializationArgument.synchronized {
           initializationArgument.set(Some(arg))
           initializationArgument.notifyAll()
         }
         addAppender(arg.appenders)
       } else {
-        commonLogger.debug("initialize logging for external slf4j logger with " + arg)
+        commonLogger.debug("initialize logging with direct slf4j logger, init: " + arg)
         initializationArgument.synchronized {
           initializationArgument.set(Some(arg))
           initializationArgument.notifyAll()
@@ -184,34 +189,42 @@ object Logging {
     }
   }
   def suspend() = {
-    // non blocking check
-    if (loggingThread.isAlive)
-      synchronized {
-        if (loggingThread.isAlive)
-          loggingThread = new Thread() // stub
-      }
+    if (buffered) {
+      // non blocking check
+      if (loggingThread.isAlive)
+        synchronized {
+          if (loggingThread.isAlive)
+            loggingThread = new Thread() // stub
+        }
+    } else {
+      commonLogger.debug("skip suspend for direct logging")
+    }
   }
   def resume() = {
-    // non blocking check
-    if (!loggingThread.isAlive)
-      synchronized {
-        if (!loggingThread.isAlive) {
-          loggingThread = new Thread("GenericLogger for " + Logging.getClass.getName) {
-            this.setDaemon(true)
-            @tailrec
-            override def run() = {
-              if (appender.nonEmpty && !queue.isEmpty) {
-                flushQueue(flushLimit)
-                Thread.sleep(50)
-              } else
-                queue.synchronized { queue.wait }
-              if (loggingThread.getId == this.getId)
-                run
+    if (buffered) {
+      // non blocking check
+      if (!loggingThread.isAlive)
+        synchronized {
+          if (!loggingThread.isAlive) {
+            loggingThread = new Thread("GenericLogger for " + Logging.getClass.getName) {
+              this.setDaemon(true)
+              @tailrec
+              override def run() = {
+                if (appender.nonEmpty && !queue.isEmpty) {
+                  flushQueue(flushLimit)
+                  Thread.sleep(50)
+                } else
+                  queue.synchronized { queue.wait }
+                if (loggingThread.getId == this.getId)
+                  run
+              }
             }
+            loggingThread.start
           }
-          loggingThread.start
         }
-      }
+    } else {
+      commonLogger.debug("skip resume for direct logging")
+    }
   }
   def flush(): Int = synchronized {
     if (appender.isEmpty)
@@ -310,6 +323,7 @@ object Logging {
     richLogger.find(f)
 
   trait Init {
+    val buffered: Boolean
     val logPrefix: String
     val isTraceExtraEnabled: Boolean
     val isTraceEnabled: Boolean
@@ -323,6 +337,7 @@ object Logging {
     val appenders: Seq[Appender]
   }
   class DefaultInit extends Init {
+    val buffered = false
     val logPrefix = "@" // prefix for all adb logcat TAGs, everyone may change (but should not) it on his/her own risk
     val isTraceExtraEnabled = false
     val isTraceEnabled = true
@@ -330,7 +345,31 @@ object Logging {
     val isInfoEnabled = true
     val isWarnEnabled = true
     val isErrorEnabled = true
-    val shutdownHook = new Thread() { override def run() = deinit }
+    val shutdownHook = new Thread() {
+      override def run() = {
+        if (buffered) {
+          offer(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "buffered logging is preparing for shutdown"))
+          def isQueueEmpty(): Boolean = {
+            if (!queue.isEmpty())
+              return false
+            Thread.sleep(500)
+            queue.isEmpty()
+          }
+          // wait for log messages 10min before termination
+          breakable {
+            for (i <- 0 to 1200)
+              if (isQueueEmpty())
+                break
+              else
+                flush()
+          }
+          appender.foreach(_(Array(Record(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "no more log messages, shutdown"))))
+          deinit()
+        } else {
+          commonLogger.debug("direct logging is ready for shutdown")
+        }
+      }
+    }
     val richLoggerBuilder = (name: String) => new RichLogger(LoggerFactory.getLogger(name))
     val flushLimit = 1000
     val appenders = Seq[Appender]()

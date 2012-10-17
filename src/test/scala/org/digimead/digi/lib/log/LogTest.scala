@@ -41,6 +41,7 @@ class LoggingTestSimpleInit extends FunSuite with BeforeAndAfter with ShouldMatc
     test.log.___glance("start")
     test.log.isInstanceOf[RichLogger] should be(true)
     test.log.base.isInstanceOf[org.slf4j.impl.Log4jLoggerAdapter] should be(true)
+    //System.exit(0)
   }
 }
 
