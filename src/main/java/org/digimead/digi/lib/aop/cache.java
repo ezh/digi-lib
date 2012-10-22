@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface Cacheable {
+public @interface cache {
 	// namespace id - where all cached date saved
 	int namespace() default 0;
 	// time period when data is actual

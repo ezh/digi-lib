@@ -18,7 +18,63 @@
 
 package org.digimead.digi.lib
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
+import scala.annotation.implicitNotFound
+
+import org.digimead.digi.lib.log.Logging
+import org.digimead.digi.lib.log.MDC
+import org.digimead.digi.lib.log.NDC
+import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.log.logger.RichLogger
+import org.scala_tools.subcut.inject.BindingModule
+import org.scala_tools.subcut.inject.NewBindingModule
+import org.slf4j.LoggerFactory
+
 package object log {
-  @volatile var LoggingInitializationArgument: Option[Logging.Init] = Some(new Logging.DefaultInit)
-  @volatile var RecordInitializationArgument: Option[Record.Init] = Some(new Record.DefaultInit)
+  private[log] val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
+  val default = new NewBindingModule(module => {
+    module.bind[Option[Logging.BufferedLogThread]] identifiedBy "Log.BufferedThread" toSingle { None }
+    module.bind[SimpleDateFormat] identifiedBy "Log.Record.DateFormat" toSingle { dateFormat }
+    module.bind[Int] identifiedBy "Log.Record.PID" toSingle { -1 }
+    module.bind[Record.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
+      level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
+      new Message(date, tid, level, tag, message, throwable, pid)
+    }
+    module.bind[Record] toModuleSingle { implicit module => new Record }
+    module.bind[(String) => RichLogger] identifiedBy "Log.Builder" toProvider ((module: BindingModule) => {
+      def isTraceWhereEnabled = module.injectOptional[Boolean](Some("Log.TraceWhereEnabled")) getOrElse false
+      (name: String) => new RichLogger(LoggerFactory.getLogger(name), isTraceWhereEnabled)
+    })
+    module.bind[Logging] toModuleSingle { implicit module => new Logging }
+  })
+  val defaultWithDC = new NewBindingModule(module => {
+    module.bind[Record.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
+      level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
+      new Message(date, tid, level, tag, message + " " + getMDC + getNDC, throwable, pid)
+    }
+
+    def getMDC() = {
+      val mdc = MDC.getSeq.map(t => t._1 + "=" + t._2).mkString(", ")
+      if (mdc.isEmpty()) mdc else "{" + mdc + "}"
+    }
+    def getNDC() = {
+      val ndc = NDC.getSeq.mkString(", ")
+      if (ndc.isEmpty()) ndc else "{" + ndc + "}"
+    }
+  }) ~ default
+}
+
+package log {
+  class Message(val date: Date,
+    val tid: Long,
+    val level: Record.Level,
+    val tag: String,
+    val message: String,
+    val throwable: Option[Throwable],
+    val pid: Int) extends Record.Message {
+    override def toString = "%s P%05d T%05d %s %-24s %s".format(dateFormat.format(date),
+      pid, tid, level.toString.charAt(0), tag + ":", message)
+  }
 }

@@ -62,9 +62,12 @@ TaskKey[Unit]("publish-github") <<= TaskKey[Unit]("publish-github").dependsOn(Pa
 
 publishTo  <<= baseDirectory  { (base) => Some(Resolver.file("file",  base / "publish/releases" )) }
 
+resolvers += ("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots")
+
 libraryDependencies ++= {
   Seq(
-    "org.slf4j" % "slf4j-api" % "1.7.1"
+    "org.slf4j" % "slf4j-api" % "1.7.1",
+    "com.escalatesoft.subcut" %% "subcut" % "2.0-SNAPSHOT"
   )
 }
 
@@ -81,5 +84,7 @@ if (sys.env.contains("LOCAL_BUILD")) {
 } else {
   Seq[Project.Setting[_]]()
 }
+
+parallelExecution in Test := false
 
 //logLevel := Level.Debug

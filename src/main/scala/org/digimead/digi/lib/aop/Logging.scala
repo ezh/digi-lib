@@ -58,12 +58,15 @@
 package org.digimead.digi.lib.aop
 
 import org.aspectj.lang.Signature
+import org.digimead.digi.lib.log.Loggable
 import org.digimead.digi.lib.log.{ Logging => LLogging }
+import org.digimead.digi.lib.log.Logging.instance2Logging
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 
 object Logging {
   def enteringMethod(file: String, line: Int, signature: Signature, obj: AnyRef) {
     obj match {
-      case logging: LLogging =>
+      case logging: Loggable =>
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
@@ -77,7 +80,7 @@ object Logging {
   }
   def leavingMethod(file: String, line: Int, signature: Signature, obj: AnyRef) {
     obj match {
-      case logging: LLogging =>
+      case logging: Loggable =>
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
@@ -91,7 +94,7 @@ object Logging {
   }
   def leavingMethod(file: String, line: Int, signature: Signature, obj: AnyRef, returnValue: Object) {
     obj match {
-      case logging: LLogging =>
+      case logging: Loggable =>
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
@@ -105,7 +108,7 @@ object Logging {
   }
   def leavingMethodException(file: String, line: Int, signature: Signature, obj: AnyRef, throwable: Exception) {
     obj match {
-      case logging: LLogging =>
+      case logging: Loggable =>
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
@@ -119,6 +122,12 @@ object Logging {
         LLogging.commonLogger.trace("[L%04d".format(line) + "] leavingMethodException " + className + "::" + methodName + " at " + file.takeWhile(_ != '.') + ". Reason: " + exceptionMessage)
     }
   }
+  class Basic extends Loggable {
+    @log
+    def void[T](f: () => T) { f() }
+    @log
+    def nonVoid[T](f: () => T) = f()
+  }
 }
 
 /*
@@ -126,44 +135,47 @@ object Logging {
 Example:
 
 import org.aspectj.lang.reflect.SourceLocation;
+import org.digimead.digi.lib.aop.log;
+import org.digimead.digi.lib.log.Loggable;
 
 privileged public final aspect AspectLogging {
-	public pointcut loggingNonVoid(Logging obj, Loggable loggable) : target(obj) && execution(@Loggable !void *(..)) && @annotation(loggable);
+	public pointcut loggingNonVoid(Loggable obj, log l) : target(obj) && execution(@log !void *(..)) && @annotation(l);
 
-	public pointcut loggingVoid(Logging obj, Loggable loggable) : target(obj) && execution(@Loggable void *(..)) && @annotation(loggable);
+	public pointcut loggingVoid(Loggable obj, log l) : target(obj) && execution(@log void *(..)) && @annotation(l);
 
-	public pointcut logging(Logging obj, Loggable loggable) : loggingVoid(obj, loggable) || loggingNonVoid(obj, loggable);
+	public pointcut logging(Loggable obj, log l) : loggingVoid(obj, l) || loggingNonVoid(obj, l);
 
-	before(final Logging obj, final Loggable loggable) : logging(obj, loggable) {
+	before(final Loggable obj, final log log) : logging(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
-		if (org.digimead.digi.lib.log.Logging$.MODULE$.enabled())
-			org.digimead.digi.lib.log.Logging$.MODULE$.enteringMethod(
-					location.getFileName(), location.getLine(),	thisJoinPointStaticPart.getSignature(), obj);
+		org.digimead.digi.lib.aop.Logging$.MODULE$.enteringMethod(
+				location.getFileName(), location.getLine(),
+				thisJoinPointStaticPart.getSignature(), obj);
 	}
 
-	after(final Logging obj, final Loggable loggable) returning(final Object result) : loggingNonVoid(obj, loggable) {
+	after(final Loggable obj, final log log) returning(final Object result) : loggingNonVoid(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
-		if (org.digimead.digi.lib.log.Logging$.MODULE$.enabled())
-			if (loggable.result())
-				org.digimead.digi.lib.log.Logging$.MODULE$.leavingMethod(
-						location.getFileName(), location.getLine(),	thisJoinPointStaticPart.getSignature(), obj, result);
-			else
-				org.digimead.digi.lib.log.Logging$.MODULE$
-						.leavingMethod(location.getFileName(), location.getLine(),	thisJoinPointStaticPart.getSignature(), obj);
+		if (log != null && log.result())
+			org.digimead.digi.lib.aop.Logging$.MODULE$.leavingMethod(
+					location.getFileName(), location.getLine(),
+					thisJoinPointStaticPart.getSignature(), obj, result);
+		else
+			org.digimead.digi.lib.aop.Logging$.MODULE$.leavingMethod(
+					location.getFileName(), location.getLine(),
+					thisJoinPointStaticPart.getSignature(), obj);
 	}
 
-	after(final Logging obj, final Loggable loggable) returning() : loggingVoid(obj, loggable) {
+	after(final Loggable obj, final log log) returning() : loggingVoid(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
-		if (org.digimead.digi.lib.log.Logging$.MODULE$.enabled())
-			org.digimead.digi.lib.log.Logging$.MODULE$
-					.leavingMethod(location.getFileName(), location.getLine(),	thisJoinPointStaticPart.getSignature(), obj);
+		org.digimead.digi.lib.aop.Logging$.MODULE$.leavingMethod(
+				location.getFileName(), location.getLine(),
+				thisJoinPointStaticPart.getSignature(), obj);
 	}
 
-	after(final Logging obj, final Loggable loggable) throwing(final Exception ex) : logging(obj, loggable) {
+	after(final Loggable obj, final log log) throwing(final Exception ex) : logging(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
-		if (org.digimead.digi.lib.log.Logging$.MODULE$.enabled())
-			org.digimead.digi.lib.log.Logging$.MODULE$
-					.leavingMethodException(location.getFileName(), location.getLine(),	thisJoinPointStaticPart.getSignature(), obj, ex);
+		org.digimead.digi.lib.aop.Logging$.MODULE$.leavingMethodException(
+				location.getFileName(), location.getLine(),
+				thisJoinPointStaticPart.getSignature(), obj, ex);
 	}
 }
 

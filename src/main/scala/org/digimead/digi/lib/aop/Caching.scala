@@ -20,11 +20,14 @@ package org.digimead.digi.lib.aop
 
 import scala.Array.canBuildFrom
 
+import org.digimead.digi.lib.DependencyInjection
+import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
 import org.digimead.digi.lib.cache.{ Caching => CCaching }
-import org.digimead.digi.lib.log.{ Logging => LLogging }
+import org.digimead.digi.lib.log.Loggable
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 
-abstract class Caching extends LLogging {
-  protected def execute(invoker: Invoker, annotation: Cacheable, longSignature: String, shortSignature: String, args: Array[AnyRef]): Any = {
+abstract class Caching extends Loggable {
+  protected def execute(invoker: Invoker, annotation: cache, longSignature: String, shortSignature: String, args: Array[AnyRef]): Any = {
     // TODO val logging = log.isTraceEnabled()
     /*
      * last argument is inappropriate, for example scala compiler add Manifest[_] to tail
@@ -48,7 +51,7 @@ abstract class Caching extends LLogging {
     } else
       longSignature.hashCode() + " " + args.map(_.hashCode()).mkString(" ")
     log.trace(shortSignature + " with namespace id " + annotation.namespace)
-    CCaching.actor !? CCaching.Message.GetByID(annotation.namespace(), key, annotation.period()) match {
+    Caching.instance.actor !? CCaching.Message.GetByID(annotation.namespace(), key, annotation.period()) match {
       case r @ Some(retVal) =>
         log.trace("HIT, key " + key + " found, returning cached value")
         return r
@@ -63,22 +66,22 @@ abstract class Caching extends LLogging {
     invoker.invoke() match {
       case r @ Traversable =>
         // process collection
-        CCaching.actor ! CCaching.Message.UpdateByID(namespaceID, key, r)
+        Caching.instance.actor ! CCaching.Message.UpdateByID(namespaceID, key, r)
         log.trace("key " + key + " updated")
         r
       case Nil =>
         // process Nil
-        CCaching.actor ! CCaching.Message.RemoveByID(namespaceID, key)
+        Caching.instance.actor ! CCaching.Message.RemoveByID(namespaceID, key)
         log.trace("key " + key + "  removed, original method return Nil value")
         Nil
       case r @ Some(retVal) =>
         // process option
-        CCaching.actor ! CCaching.Message.UpdateByID(namespaceID, key, retVal)
+        Caching.instance.actor ! CCaching.Message.UpdateByID(namespaceID, key, retVal)
         log.trace("key " + key + " updated")
         r
       case None =>
         // process None
-        CCaching.actor ! CCaching.Message.RemoveByID(namespaceID, key)
+        Caching.instance.actor ! CCaching.Message.RemoveByID(namespaceID, key)
         log.trace("key " + key + " removed, original return None value")
         None
     }
@@ -87,9 +90,17 @@ abstract class Caching extends LLogging {
   }
 }
 
-object Caching {
-  private final val BoxedTrue = Boolean.box(true)
-  private final val BoxedFalse = Boolean.box(false)
+object Caching extends PersistentInjectable {
+  implicit def bindingModule = DependencyInjection()
+  @volatile private var instance = inject[CCaching]
+  final val BoxedTrue = Boolean.box(true)
+  final val BoxedFalse = Boolean.box(false)
+
+  def reloadInjection() { instance = inject[CCaching] }
+  class Basic {
+    @cache
+    def cached[T](f: () => T) = f()
+  }
 }
 
 /*

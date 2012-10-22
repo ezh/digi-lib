@@ -21,7 +21,7 @@ package org.digimead.digi.lib.log.appender
 import org.digimead.digi.lib.log.Record
 
 object Console extends Appender {
-  protected var f = (records: Array[Record]) => synchronized {
+  protected var f = (records: Array[Record.Message]) => synchronized {
     records.foreach(r => {
       System.err.println(r.toString())
       r.throwable.foreach(t => System.err.print(try {

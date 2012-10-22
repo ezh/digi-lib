@@ -16,10 +16,15 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi {
+  package object lib {
+    val default = log.default ~ cache.default
+    val defaultWithDC = log.defaultWithDC ~ cache.default
+  }
+}
 
-import org.digimead.digi.lib.log.Record
-
-object NullAppender extends Appender {
-  protected var f = (records: Array[Record.Message]) => {}
+package org.scala_tools.subcut.inject {
+  object getBindingKey {
+    def apply[T](m: Manifest[T], name: Option[String]) = BindingKey(m, name)
+  }
 }

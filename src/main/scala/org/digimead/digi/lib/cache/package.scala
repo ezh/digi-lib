@@ -16,10 +16,17 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib
 
-import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.cache.Cache
+import org.digimead.digi.lib.cache.Caching
+import org.digimead.digi.lib.cache.NilCache
+import org.scala_tools.subcut.inject.NewBindingModule
 
-object NullAppender extends Appender {
-  protected var f = (records: Array[Record.Message]) => {}
+package object cache {
+  val default = new NewBindingModule(module => {
+    module.bind[Cache[String, Any]] identifiedBy "Cache.Engine" toSingle { new NilCache[String, Any] }
+    module.bind[Long] identifiedBy "Cache.TTL" toSingle { 1000 * 60 * 10L } // 10 minutes
+    module.bind[Caching] toModuleSingle { implicit module => new Caching }
+  })
 }

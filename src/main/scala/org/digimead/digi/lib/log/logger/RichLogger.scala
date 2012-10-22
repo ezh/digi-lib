@@ -23,13 +23,61 @@ import scala.annotation.implicitNotFound
 import org.digimead.digi.lib.log.Logging
 
 @implicitNotFound(msg = "please define implicit RichLogger")
-class RichLogger(val base: org.slf4j.Logger) {
-  var traceEnabled: Option[Boolean] = None
-  var debugEnabled: Option[Boolean] = None
-  var infoEnabled: Option[Boolean] = None
-  var warnEnabled: Option[Boolean] = None
-  var errorEnabled: Option[Boolean] = None
+class RichLogger private[log] (val base: org.slf4j.Logger, val isTraceWhereEnabled: Boolean) {
+  protected lazy val traceFuncS: (String => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String) => logWhere(msg, base.trace, base.trace)(-2)
+    case (true, false) => (msg: String) => base.trace(msg)
+    case (false, _) => (msg: String) => {}
+  }
+  protected lazy val traceFuncSI: ((String, Int) => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, base.trace, base.trace)(stackLine)
+    case (true, false) => (msg: String, stackLine: Int) => base.trace(msg)
+    case (false, _) => (msg: String, stackLine: Int) => {}
+  }
 
+  protected lazy val debugFuncS: (String => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String) => logWhere(msg, base.debug, base.debug)(-2)
+    case (true, false) => (msg: String) => base.debug(msg)
+    case (false, _) => (msg: String) => {}
+  }
+  protected lazy val debugFuncSI: ((String, Int) => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, base.debug, base.debug)(stackLine)
+    case (true, false) => (msg: String, stackLine: Int) => base.debug(msg)
+    case (false, _) => (msg: String, stackLine: Int) => {}
+  }
+
+  protected lazy val infoFuncS: (String => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String) => logWhere(msg, base.info, base.info)(-2)
+    case (true, false) => (msg: String) => base.info(msg)
+    case (false, _) => (msg: String) => {}
+  }
+  protected lazy val infoFuncSI: ((String, Int) => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, base.info, base.info)(stackLine)
+    case (true, false) => (msg: String, stackLine: Int) => base.info(msg)
+    case (false, _) => (msg: String, stackLine: Int) => {}
+  }
+
+  protected lazy val warnFuncS: (String => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String) => logWhere(msg, base.warn, base.warn)(-2)
+    case (true, false) => (msg: String) => base.warn(msg)
+    case (false, _) => (msg: String) => {}
+  }
+  protected lazy val warnFuncSI: ((String, Int) => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, base.warn, base.warn)(stackLine)
+    case (true, false) => (msg: String, stackLine: Int) => base.warn(msg)
+    case (false, _) => (msg: String, stackLine: Int) => {}
+  }
+
+  protected lazy val errorFuncS: (String => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String) => logWhere(msg, base.error, base.error)(-2)
+    case (true, false) => (msg: String) => base.error(msg)
+    case (false, _) => (msg: String) => {}
+  }
+  protected lazy val errorFuncSI: ((String, Int) => Unit) = (base.isTraceEnabled, isTraceWhereEnabled) match {
+    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, base.error, base.error)(stackLine)
+    case (true, false) => (msg: String, stackLine: Int) => base.error(msg)
+    case (false, _) => (msg: String, stackLine: Int) => {}
+  }
   // fast look while development, highlight it in your IDE
   def ___gaze(msg: String) {
     val t = new Throwable(msg)
@@ -48,77 +96,27 @@ class RichLogger(val base: org.slf4j.Logger) {
     t.fillInStackTrace()
     base.error(msg, t)
   }
-  def isTraceExtraEnabled(): Boolean = Logging.isTraceExtraEnabled
-  /* @see org.slf4j.Logger#isTraceEnabled() */
-  def isTraceEnabled(): Boolean = traceEnabled getOrElse Logging.isTraceEnabled
-  def traceWhere(msg: String): Unit = if (isTraceEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.trace, base.trace)(-2)
-    else
-      base.trace(msg)
-  def traceWhere(msg: String, stackLine: Int): Unit = if (isTraceEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.trace, base.trace)(stackLine)
-    else
-      base.trace(msg)
 
-  /* @see org.slf4j.Logger#isDebugEnabled() */
-  def isDebugEnabled(): Boolean = debugEnabled getOrElse Logging.isDebugEnabled
-  def debugWhere(msg: String): Unit = if (isDebugEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.debug, base.debug)(-2)
-    else
-      base.debug(msg)
-  def debugWhere(msg: String, stackLine: Int): Unit = if (isDebugEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.debug, base.debug)(stackLine)
-    else
-      base.debug(msg)
+  def traceWhere(msg: String): Unit = traceFuncS(msg)
+  def traceWhere(msg: String, stackLine: Int): Unit = traceFuncSI(msg, stackLine)
 
-  /* @see org.slf4j.Logger#isInfoEnabled() */
-  def isInfoEnabled: Boolean = infoEnabled getOrElse Logging.isInfoEnabled
-  def infoWhere(msg: String): Unit = if (isInfoEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.info, base.info)(-2)
-    else
-      base.info(msg)
-  def infoWhere(msg: String, stackLine: Int = 4): Unit = if (isInfoEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.info, base.info)(stackLine)
-    else
-      base.info(msg)
+  def debugWhere(msg: String): Unit = debugFuncS(msg)
+  def debugWhere(msg: String, stackLine: Int): Unit = debugFuncSI(msg, stackLine)
 
-  /* @see org.slf4j.Logger#isWarnEnabled() */
-  def isWarnEnabled: Boolean = warnEnabled getOrElse Logging.isWarnEnabled
-  def warnWhere(msg: String): Unit = if (isWarnEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.warn, base.warn)(-2)
-    else
-      base.warn(msg)
-  def warnWhere(msg: String, stackLine: Int = 4): Unit = if (isWarnEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.warn, base.warn)(stackLine)
-    else
-      base.warn(msg)
+  def infoWhere(msg: String): Unit = infoFuncS(msg)
+  def infoWhere(msg: String, stackLine: Int): Unit = infoFuncSI(msg, stackLine)
 
-  /* @see org.slf4j.Logger#isErrorEnabled() */
-  def isErrorEnabled: Boolean = errorEnabled getOrElse Logging.isErrorEnabled
-  def errorWhere(msg: String): Unit = if (isErrorEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.error, base.error)(-2)
-    else
-      base.error(msg)
-  def errorWhere(msg: String, stackLine: Int): Unit = if (isErrorEnabled)
-    if (Logging.isTraceExtraEnabled)
-      logWhere(msg, base.error, base.error)(stackLine)
-    else
-      base.error(msg)
+  def warnWhere(msg: String): Unit = warnFuncS(msg)
+  def warnWhere(msg: String, stackLine: Int): Unit = warnFuncSI(msg, stackLine)
 
-  private def logWhere(msg: String, f1: (String, Throwable) => Unit, f2: (String => Unit))(stackLine: Int) {
+  def errorWhere(msg: String): Unit = errorFuncS(msg)
+  def errorWhere(msg: String, stackLine: Int): Unit = errorFuncS(msg)
+
+  protected def logWhere(msg: String, f1: (String, Throwable) => Unit, f2: (String => Unit))(stackLine: Int) {
     val t = new Throwable(msg)
     t.fillInStackTrace()
     if (stackLine == -1) { // ALL
-      if (isTraceEnabled) {
+      if (base.isTraceEnabled) {
         f1(msg, t)
       } else { // HERE
         val trace = t.getStackTrace

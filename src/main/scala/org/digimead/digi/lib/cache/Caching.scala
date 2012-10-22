@@ -18,54 +18,23 @@
 
 package org.digimead.digi.lib.cache
 
-import java.io.File
-
 import scala.actors.Actor
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.SynchronizedMap
 import scala.ref.SoftReference
 
-import org.digimead.digi.lib.aop.Loggable
-import org.digimead.digi.lib.log.Logging
+import org.digimead.digi.lib.DependencyInjection
+import org.digimead.digi.lib.log.Loggable
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
+import org.scala_tools.subcut.inject.BindingModule
+import org.scala_tools.subcut.inject.Injectable
 
-trait CacheT[K, V] {
-  def get(namespace: scala.Enumeration#Value, key: K): Option[V]
-  def get(namespace: scala.Enumeration#Value, key: K, period: Long): Option[V]
-  def get(namespaceID: Int, key: K, period: Long): Option[V]
-  def apply(namespace: scala.Enumeration#Value, key: K): V
-  def apply(namespace: scala.Enumeration#Value, key: K, period: Long): V
-  def apply(namespaceID: Int, key: K, period: Long): V
-  def update(namespace: scala.Enumeration#Value, key: K, value: V)
-  def update(namespaceID: Int, key: K, value: V)
-  def update(namespace: scala.Enumeration#Value, updates: Iterable[(K, V)])
-  def remove(namespace: scala.Enumeration#Value, key: K): Option[V]
-  def remove(namespaceID: Int, key: K): Option[V]
-  def clear(namespace: scala.Enumeration#Value): Unit
-}
-
-class NilCache extends CacheT[String, Any] {
-  def get(namespace: scala.Enumeration#Value, key: String) = None
-  def get(namespace: scala.Enumeration#Value, key: String, period: Long) = None
-  def get(namespaceID: Int, key: String, period: Long) = None
-  def apply(namespace: scala.Enumeration#Value, key: String) = None
-  def apply(namespace: scala.Enumeration#Value, key: String, period: Long) = None
-  def apply(namespaceID: Int, key: String, period: Long) = None
-  def update(namespace: scala.Enumeration#Value, key: String, value: Any): Unit = {}
-  def update(namespaceID: Int, key: String, value: Any): Unit = {}
-  def update(namespace: scala.Enumeration#Value, updates: Iterable[(String, Any)]): Unit = {}
-  def remove(namespace: scala.Enumeration#Value, key: String): Option[Any] = None
-  def remove(namespaceID: Int, key: String): Option[Any] = None
-  def clear(namespace: scala.Enumeration#Value): Unit = {}
-}
-
-object Caching extends Logging {
-  private var inner: CacheT[String, Any] = new NilCache
-  private var period: Long = 1000 * 60 * 10 // 10 minutes
-  private var cacheClass: String = ""
-  private var cachePath: String = null
-  private var cacheFolder: File = null
+class Caching(implicit val bindingModule: BindingModule) extends Injectable with Loggable {
+  val inner = inject[Cache[String, Any]]("Cache.Engine")
+  val ttl = inject[Long]("Cache.TTL")
+  val shutdownHook = injectOptional[() => Any]("Cache.ShutdownHook")
   // key -> (timestamp, data)
-  private val map = new HashMap[String, SoftReference[(Long, Any)]]() with SynchronizedMap[String, SoftReference[(Long, Any)]]
+  private[cache] val map = new HashMap[String, SoftReference[(Long, Any)]]() with SynchronizedMap[String, SoftReference[(Long, Any)]]
   log.debug("alive")
 
   val actor = {
@@ -73,7 +42,7 @@ object Caching extends Logging {
       def act = {
         loop {
           react {
-            case Message.Get(namespace, key, period) =>
+            case Caching.Message.Get(namespace, key, period) =>
               try {
                 reply(inner.get(namespace, key, period))
               } catch {
@@ -81,7 +50,7 @@ object Caching extends Logging {
                   log.warn(e.getMessage(), e)
                   reply(None)
               }
-            case Message.GetByID(namespaceID, key, period) =>
+            case Caching.Message.GetByID(namespaceID, key, period) =>
               try {
                 reply(inner.get(namespaceID, key, period))
               } catch {
@@ -89,51 +58,48 @@ object Caching extends Logging {
                   log.warn(e.getMessage(), e)
                   reply(None)
               }
-            case Message.Update(namespace, key, value) =>
+            case Caching.Message.Update(namespace, key, value) =>
               try {
                 inner.update(namespace, key, value)
               } catch {
                 case e =>
                   log.warn(e.getMessage(), e)
               }
-            case Message.UpdateByID(namespaceID, key, value) =>
+            case Caching.Message.UpdateByID(namespaceID, key, value) =>
               try {
                 inner.update(namespaceID, key, value)
               } catch {
                 case e =>
                   log.warn(e.getMessage(), e)
               }
-            case Message.UpdateMany(namespace, updates) =>
+            case Caching.Message.UpdateMany(namespace, updates) =>
               try {
                 inner.update(namespace, updates)
               } catch {
                 case e =>
                   log.warn(e.getMessage(), e)
               }
-            case Message.Remove(namespace, key) =>
+            case Caching.Message.Remove(namespace, key) =>
               try {
                 reply(inner.remove(namespace, key))
               } catch {
                 case e =>
                   log.warn(e.getMessage(), e)
               }
-            case Message.RemoveByID(namespaceID, key) =>
+            case Caching.Message.RemoveByID(namespaceID, key) =>
               try {
                 reply(inner.remove(namespaceID, key))
               } catch {
                 case e =>
                   log.warn(e.getMessage(), e)
               }
-            case Message.Clear(namespace) =>
+            case Caching.Message.Clear(namespace) =>
               try {
                 inner.clear(namespace)
               } catch {
                 case e =>
                   log.warn(e.getMessage(), e)
               }
-            case Message.Reinitialize(arg) =>
-              inner = null
-              init(arg)
             case message: AnyRef =>
               log.errorWhere("skip unknown message " + message.getClass.getName + ": " + message)
             case message =>
@@ -146,75 +112,35 @@ object Caching extends Logging {
     actor
   }
 
-  def getDefaultPeriod(): Long = synchronized {
-    period
+  def init() {
+    log.debug("initialize caching with " + this.toString)
   }
-  @Loggable
-  def setDefaultPeriod(_period: Long) = synchronized {
-    period = _period
+  def deinit() {
+    log.debug("deinitialize " + this.toString)
   }
-  @Loggable
-  def init(arg: Init): Unit = synchronized {
-    if (inner != null) {
-      /*
-       * since actor is a single point of entry
-       * process all requests
-       * and then reinitialize
-       */
-      actor ! Message.Reinitialize(arg)
-      return
-    }
-    inner = arg.inner
-    period = arg.period
-    cacheClass = arg.cacheClass
-    cachePath = arg.cachePath
-    cacheFolder = arg.cacheFolder
-    inner = try {
-      log.debug("create cache with implementation \"" + cacheClass + "\"")
-      Class.forName(cacheClass).newInstance().asInstanceOf[CacheT[String, Any]]
-    } catch {
-      case e =>
-        log.warn(e.getMessage(), e)
-        new NilCache()
-    }
-    if (cacheFolder != null && !cacheFolder.exists)
-      if (!cacheFolder.mkdirs) {
-        log.fatal("cannot create directory: " + cacheFolder)
-        inner = new NilCache()
-      }
-    log.info("set cache timeout to \"" + period + "\"")
-    log.info("set cache directory to \"" + cachePath + "\"")
-    log.info("set cache implementation to \"" + inner.getClass.getName() + "\"")
-  }
-  def deinit() = synchronized {
-    if (inner != null)
-      inner = null
-  }
-  def initialized = synchronized { inner != null }
+  override def toString() = "default Caching implementation"
+}
 
-  trait Init {
-    val inner: CacheT[String, Any]
-    val period: Long
-    val cacheClass: String
-    val cachePath: String
-    val cacheFolder: File
+object Caching extends Injectable {
+  implicit def bindingModule = DependencyInjection()
+  @volatile private[cache] var instance = inject[Caching]
+  Runtime.getRuntime().addShutdownHook(new Thread { override def run = Caching.instance.shutdownHook.foreach(_()) })
+  instance.init()
+
+  def reloadInjection() {
+    instance.deinit()
+    instance = inject[Caching]
+    instance.init
   }
-  object DefaultInit extends Init {
-    val inner: CacheT[String, Any] = null
-    val period: Long = 1000 * 60 * 10 // 10 minutes
-    val cacheClass: String = "org.digimead.digi.lib.cache.NilCache"
-    val cachePath: String = null
-    val cacheFolder: File = null
-  }
+
   object Message {
-    case class Get(namespace: scala.Enumeration#Value, key: String, period: Long = getDefaultPeriod())
-    case class GetByID(namespaceId: Int, key: String, period: Long = getDefaultPeriod())
+    case class Get(namespace: scala.Enumeration#Value, key: String, ttl: Long = Caching.instance.ttl)
+    case class GetByID(namespaceId: Int, key: String, ttl: Long = Caching.instance.ttl)
     case class Update(namespace: scala.Enumeration#Value, key: String, value: Any)
     case class UpdateByID(namespaceId: Int, key: String, value: Any)
     case class UpdateMany(namespace: scala.Enumeration#Value, updates: Iterable[(String, Any)])
     case class Remove(namespace: scala.Enumeration#Value, key: String)
     case class RemoveByID(namespaceId: Int, key: String)
     case class Clear(namespace: scala.Enumeration#Value)
-    case class Reinitialize(arg: Init)
   }
 }

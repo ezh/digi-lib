@@ -22,11 +22,11 @@ import org.digimead.digi.lib.log.Logging
 import org.digimead.digi.lib.log.Record
 
 trait Appender {
-  protected var f: (Array[Record]) => Unit
-  def init(args: Logging.Init) {}
-  def apply(r: Array[Record]) = f(r)
+  protected var f: (Array[Record.Message]) => Unit
+  def init() {}
+  def apply(r: Array[Record.Message]) = f(r)
   def deinit() {}
   def flush() {}
   def getF() = synchronized { f }
-  def setF(_f: (Array[Record]) => Unit) = synchronized { f = _f }
+  def setF(_f: (Array[Record.Message]) => Unit) = synchronized { f = _f }
 }

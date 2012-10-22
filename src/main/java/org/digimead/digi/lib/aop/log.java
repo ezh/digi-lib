@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- *
+ * 
  * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,20 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib.aop;
 
-import org.digimead.digi.lib.log.Record
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-object NullAppender extends Appender {
-  protected var f = (records: Array[Record.Message]) => {}
+/**
+ * Use this annotation on methods which you want to be weaved by the
+ * {@link Logging}.
+ * 
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface log {
+	boolean result() default true;
 }

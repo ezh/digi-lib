@@ -16,10 +16,22 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib.aop;
 
-import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.aop.cache;
 
-object NullAppender extends Appender {
-  protected var f = (records: Array[Record.Message]) => {}
+privileged public final aspect AspectCaching extends
+		org.digimead.digi.lib.aop.Caching {
+	public pointcut cachedAccessPoint(cache c):
+		execution(@cache * *(..)) && @annotation(c);
+
+	Object around(final cache c): cachedAccessPoint(c) {
+		Invoker aspectJInvoker = new Invoker() {
+			public Object invoke() {
+				return proceed(c);
+			}
+		};
+		return execute(aspectJInvoker, c, thisJoinPointStaticPart.toLongString(),
+				thisJoinPointStaticPart.toShortString(), thisJoinPoint.getArgs());
+	}
 }
