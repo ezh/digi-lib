@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.aop;
+package org.digimead.digi.lib.aop.internal;
 
 import org.digimead.digi.lib.aop.cache;
 

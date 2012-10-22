@@ -39,7 +39,7 @@ resolvers += ("snapshots" at "http://oss.sonatype.org/content/repositories/snaps
 libraryDependencies ++= {
   Seq(
     "org.slf4j" % "slf4j-api" % "1.7.1",
-    "org.aspectj" % "aspectjrt" % "1.6.12",
+    "org.aspectj" % "aspectjrt" % "1.7.1",
     "com.escalatesoft.subcut" %% "subcut" % "2.0-SNAPSHOT"
   )
 }
