@@ -26,7 +26,29 @@ import org.scalatest.PrivateMethodTester
 import org.scalatest.matchers.ShouldMatchers
 
 class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
-  describe("A Cache instances") {
+  org.apache.log4j.BasicConfigurator.resetConfiguration()
+  org.apache.log4j.BasicConfigurator.configure()
+
+  describe("A Cache") {
+    it("should have proper reinitialization") {
+      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+      val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
+      DependencyInjection.set(config)
+      val privateInstance = PrivateMethod[Caching]('instance)
+
+      config.inject[Caching](None) should be theSameInstanceAs (config.inject[Caching](None))
+      val caching1 = AOPCaching invokePrivate privateInstance()
+      DependencyInjection.reset()
+      val caching2 = AOPCaching invokePrivate privateInstance()
+      caching1 should be theSameInstanceAs (caching2)
+      caching1.inner should be theSameInstanceAs (caching2.inner)
+      caching1.ttl should equal(caching2.ttl)
+
+      DependencyInjection.reset(config ~ (NewBindingModule.newBindingModule(module => {})))
+      val caching3 = AOPCaching invokePrivate privateInstance()
+      caching1 should not be theSameInstanceAs(caching3)
+      caching2 should not be theSameInstanceAs(caching3)
+    }
     it("should create singeton with default parameters") {
       DependencyInjection.get.foreach(_ => DependencyInjection.clear)
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default

@@ -24,6 +24,7 @@ import scala.collection.mutable.SynchronizedMap
 import scala.ref.SoftReference
 
 import org.digimead.digi.lib.DependencyInjection
+import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
 import org.digimead.digi.lib.log.Loggable
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 import org.scala_tools.subcut.inject.BindingModule
@@ -121,7 +122,7 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
   override def toString() = "default Caching implementation"
 }
 
-object Caching extends Injectable {
+object Caching extends PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
   @volatile private[cache] var instance = inject[Caching]
   Runtime.getRuntime().addShutdownHook(new Thread { override def run = Caching.instance.shutdownHook.foreach(_()) })

@@ -36,10 +36,10 @@ import org.digimead.digi.lib.log.appender.Appender
 import org.digimead.digi.lib.log.logger.RichLogger
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 import org.scala_tools.subcut.inject.BindingModule
-import org.scala_tools.subcut.inject.{ Injectable => SubCutInjectable }
+import org.scala_tools.subcut.inject.Injectable
 import org.slf4j.LoggerFactory
 
-class Logging(implicit val bindingModule: BindingModule) extends SubCutInjectable {
+class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val record = inject[Record]
   val builder = inject[(String) => RichLogger]("Log.Builder")
   /** prefix for all adb logcat TAGs, everyone may change (but should not) it on his/her own risk */

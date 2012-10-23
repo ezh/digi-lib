@@ -24,9 +24,10 @@ import org.digimead.digi.lib.cache.NilCache
 import org.scala_tools.subcut.inject.NewBindingModule
 
 package object cache {
-  val default = new NewBindingModule(module => {
+  lazy val default = new NewBindingModule(module => {
     module.bind[Cache[String, Any]] identifiedBy "Cache.Engine" toSingle { new NilCache[String, Any] }
     module.bind[Long] identifiedBy "Cache.TTL" toSingle { 1000 * 60 * 10L } // 10 minutes
-    module.bind[Caching] toModuleSingle { implicit module => new Caching }
+    lazy val cachingSingleton = DependencyInjection.makeSingleton(implicit module => new Caching)
+    module.bind[Caching] toModuleSingle { cachingSingleton(_) }
   })
 }

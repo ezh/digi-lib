@@ -29,12 +29,32 @@ import org.scalatest.FunSpec
 import org.scalatest.PrivateMethodTester
 import org.scalatest.matchers.ShouldMatchers
 
-class LogSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with PrivateMethodTester {
-  override def beforeAll() {
-    org.apache.log4j.BasicConfigurator.configure()
-  }
+class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
+  org.apache.log4j.BasicConfigurator.resetConfiguration()
+  org.apache.log4j.BasicConfigurator.configure()
 
-  describe("A Log instances") {
+  describe("A Log") {
+    it("should have proper reinitialization") {
+      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+      val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
+      DependencyInjection.set(config)
+      val privateInstance = PrivateMethod[Logging]('instance)
+
+      config.inject[Logging](None) should be theSameInstanceAs (config.inject[Logging](None))
+      val logging1 = Logging invokePrivate privateInstance()
+      DependencyInjection.reset()
+      val logging2 = Logging invokePrivate privateInstance()
+      logging1 should be theSameInstanceAs (logging2)
+      logging1.record should be theSameInstanceAs (logging2.record)
+      logging1.record.dateFormat should be theSameInstanceAs (logging2.record.dateFormat)
+      logging1 should be theSameInstanceAs (config.inject[Logging](None))
+      logging1.builder should not be theSameInstanceAs(config.inject[(String) => RichLogger](Some("Log.Builder")))
+
+      DependencyInjection.reset(config ~ (NewBindingModule.newBindingModule(module => {})))
+      val logging3 = Logging invokePrivate privateInstance()
+      logging1 should not be theSameInstanceAs(logging3)
+      logging2 should not be theSameInstanceAs(logging3)
+    }
     it("should create singeton with default parameters") {
       DependencyInjection.get.foreach(_ => DependencyInjection.clear)
       val config = org.digimead.digi.lib.log.default ~ org.digimead.digi.lib.default
@@ -48,7 +68,7 @@ class LogSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with Pr
       instance.bufferedFlushLimit should be(1000)
       instance.shutdownHook should be(None)
       instance.bufferedAppender should be('empty)
-      instance.richLogger.size should not be('empty)
+      instance.richLogger.size should not be ('empty)
       instance.commonLogger should not be (null)
 
       class Test extends Loggable {

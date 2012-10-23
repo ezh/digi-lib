@@ -33,8 +33,8 @@ import org.scala_tools.subcut.inject.NewBindingModule
 import org.slf4j.LoggerFactory
 
 package object log {
-  private[log] val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
-  val default = new NewBindingModule(module => {
+  private[log] lazy val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
+  lazy val default = new NewBindingModule(module => {
     module.bind[Option[Logging.BufferedLogThread]] identifiedBy "Log.BufferedThread" toSingle { None }
     module.bind[SimpleDateFormat] identifiedBy "Log.Record.DateFormat" toSingle { dateFormat }
     module.bind[Int] identifiedBy "Log.Record.PID" toSingle { -1 }
@@ -42,14 +42,16 @@ package object log {
       level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
       new Message(date, tid, level, tag, message, throwable, pid)
     }
-    module.bind[Record] toModuleSingle { implicit module => new Record }
+    lazy val recordSingleton = DependencyInjection.makeSingleton(implicit module => new Record)
+    module.bind[Record] toModuleSingle { recordSingleton(_) }
     module.bind[(String) => RichLogger] identifiedBy "Log.Builder" toProvider ((module: BindingModule) => {
       def isTraceWhereEnabled = module.injectOptional[Boolean](Some("Log.TraceWhereEnabled")) getOrElse false
       (name: String) => new RichLogger(LoggerFactory.getLogger(name), isTraceWhereEnabled)
     })
-    module.bind[Logging] toModuleSingle { implicit module => new Logging }
+    lazy val loggingSingleton = DependencyInjection.makeSingleton(implicit module => new Logging)
+    module.bind[Logging] toModuleSingle { loggingSingleton(_) }
   })
-  val defaultWithDC = new NewBindingModule(module => {
+  lazy val defaultWithDC = new NewBindingModule(module => {
     module.bind[Record.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
       level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
       new Message(date, tid, level, tag, message + " " + getMDC + getNDC, throwable, pid)

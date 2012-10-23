@@ -45,9 +45,25 @@ object DependencyInjection {
     this.di = null
     result
   }
+  def reset(config: BindingModule = di) = Option(config).foreach(config => { clear; set(config) })
   def get(): Option[BindingModule] = synchronized { Option(di) }
   def key[T](name: String)(implicit m: Manifest[T]) = org.scala_tools.subcut.inject.getBindingKey[T](m, Some(name))
   def key[T](name: Option[String])(implicit m: Manifest[T]) = org.scala_tools.subcut.inject.getBindingKey[T](m, name)
+  /**
+   * create wrapper for SubCut toModuleSingle
+   * if fixed is true - singleton will initialized only once
+   * if fixed is false - singleton will reinitialized if module changed 
+   */
+  def makeSingleton[T](f: (BindingModule) => T, fixed: Boolean = false): BindingModule => T = {
+    @volatile var savedModule = new WeakReference[BindingModule](null)
+    @volatile var saved: T = null.asInstanceOf[T]
+    (newModule) =>
+      if ((!fixed || saved == null) && savedModule.get != Some(newModule)) {
+        savedModule = new WeakReference[BindingModule](newModule)
+        saved = f(newModule)
+        saved
+      } else saved
+  }
   trait PersistentInjectable extends Injectable {
     DependencyInjection.injectables(this) = new WeakReference(this)
     def reloadInjection()

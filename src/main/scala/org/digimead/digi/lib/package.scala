@@ -18,8 +18,8 @@
 
 package org.digimead.digi {
   package object lib {
-    val default = log.default ~ cache.default
-    val defaultWithDC = log.defaultWithDC ~ cache.default
+    lazy val default = log.default ~ cache.default
+    lazy val defaultWithDC = log.defaultWithDC ~ cache.default
   }
 }
 
