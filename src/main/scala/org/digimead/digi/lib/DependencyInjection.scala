@@ -18,25 +18,30 @@
 
 package org.digimead.digi.lib
 
-import scala.collection.mutable.SynchronizedMap
-import scala.collection.mutable.WeakHashMap
 import scala.ref.WeakReference
 
 import org.scala_tools.subcut.inject.BindingModule
 import org.scala_tools.subcut.inject.Injectable
 
 object DependencyInjection {
-  val injectables = new WeakHashMap[AnyRef, WeakReference[PersistentInjectable]] with SynchronizedMap[AnyRef, WeakReference[PersistentInjectable]]
+  private var firstRun = true
   private var di: BindingModule = null
+  private var injectables = Seq[WeakReference[PersistentInjectable]]()
+
   def apply(): BindingModule = synchronized {
     assert(di != null, "dependency injection not initialized")
     di
   }
-  def set(di: BindingModule): BindingModule = synchronized {
+  def set(di: BindingModule, injectionHook: => Unit = {}): BindingModule = synchronized {
     assert(this.di == null, "dependency injection already initialized")
     this.di = di
     // We set BindingModule before any Injectable created at the beginning, so injectables map is empty
-    injectables.foreach(_._2.get.foreach(_.reloadInjection))
+    if (firstRun)
+      firstRun = false
+    else
+      injectables.foreach(_.get.map(_.updateInjection))
+    injectionHook
+    injectables.foreach(_.get.map(_.commitInjection))
     di
   }
   def clear(): BindingModule = synchronized {
@@ -45,14 +50,14 @@ object DependencyInjection {
     this.di = null
     result
   }
-  def reset(config: BindingModule = di) = Option(config).foreach(config => { clear; set(config) })
+  def reset(config: BindingModule = di) = Option(config).foreach(config => { Option(di).foreach(_ => clear); set(config) })
   def get(): Option[BindingModule] = synchronized { Option(di) }
   def key[T](name: String)(implicit m: Manifest[T]) = org.scala_tools.subcut.inject.getBindingKey[T](m, Some(name))
   def key[T](name: Option[String])(implicit m: Manifest[T]) = org.scala_tools.subcut.inject.getBindingKey[T](m, name)
   /**
    * create wrapper for SubCut toModuleSingle
    * if fixed is true - singleton will initialized only once
-   * if fixed is false - singleton will reinitialized if module changed 
+   * if fixed is false - singleton will reinitialized if module changed
    */
   def makeSingleton[T](f: (BindingModule) => T, fixed: Boolean = false): BindingModule => T = {
     @volatile var savedModule = new WeakReference[BindingModule](null)
@@ -64,8 +69,13 @@ object DependencyInjection {
         saved
       } else saved
   }
+  private def registerInjectable(obj: PersistentInjectable) = synchronized {
+    injectables = injectables :+ new WeakReference(obj)
+  }
   trait PersistentInjectable extends Injectable {
-    DependencyInjection.injectables(this) = new WeakReference(this)
-    def reloadInjection()
+    DependencyInjection.registerInjectable(this)
+
+    def commitInjection()
+    def updateInjection()
   }
 }

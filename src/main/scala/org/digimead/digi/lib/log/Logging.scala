@@ -151,7 +151,6 @@ object Logging extends PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
   @volatile private var instance = inject[Logging]
   Runtime.getRuntime().addShutdownHook(new Thread { override def run = Logging.instance.shutdownHook.foreach(_()) })
-  instance.init()
 
   def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String): Unit =
     addToLog(date, tid, level, tag, message, None)
@@ -193,10 +192,10 @@ object Logging extends PersistentInjectable {
         logger
 
     }
-  def reloadInjection() = synchronized {
+  def commitInjection() { instance.init }
+  def updateInjection() {
     instance.deinit()
     instance = inject[Logging]
-    instance.init
   }
 
   abstract class BufferedLogThread extends Thread("Generic buffered logger for " + Logging.getClass.getName) {

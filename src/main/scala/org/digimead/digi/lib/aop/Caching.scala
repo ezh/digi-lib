@@ -96,7 +96,9 @@ object Caching extends PersistentInjectable {
   final val BoxedTrue = Boolean.box(true)
   final val BoxedFalse = Boolean.box(false)
 
-  def reloadInjection() { instance = inject[CCaching] }
+  def commitInjection() {}
+  def updateInjection() { instance = inject[CCaching] }
+
   class Basic {
     @cache
     def cached[T](f: () => T) = f()

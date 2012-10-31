@@ -126,12 +126,11 @@ object Caching extends PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
   @volatile private[cache] var instance = inject[Caching]
   Runtime.getRuntime().addShutdownHook(new Thread { override def run = Caching.instance.shutdownHook.foreach(_()) })
-  instance.init()
 
-  def reloadInjection() {
+  def commitInjection() { instance.init }
+  def updateInjection() {
     instance.deinit()
     instance = inject[Caching]
-    instance.init
   }
 
   object Message {
