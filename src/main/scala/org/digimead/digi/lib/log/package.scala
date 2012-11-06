@@ -21,16 +21,15 @@ package org.digimead.digi.lib
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import scala.annotation.implicitNotFound
-
 import org.digimead.digi.lib.log.Logging
 import org.digimead.digi.lib.log.MDC
 import org.digimead.digi.lib.log.NDC
 import org.digimead.digi.lib.log.Record
 import org.digimead.digi.lib.log.logger.RichLogger
-import org.scala_tools.subcut.inject.BindingModule
-import org.scala_tools.subcut.inject.NewBindingModule
 import org.slf4j.LoggerFactory
+
+import com.escalatesoft.subcut.inject.BindingModule
+import com.escalatesoft.subcut.inject.NewBindingModule
 
 package object log {
   private[log] lazy val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")

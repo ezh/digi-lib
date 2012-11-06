@@ -23,11 +23,11 @@ import scala.annotation.implicitNotFound
 import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.log.logger.RichLogger
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
-import org.scala_tools.subcut.inject.NewBindingModule
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSpec
 import org.scalatest.PrivateMethodTester
 import org.scalatest.matchers.ShouldMatchers
+
+import com.escalatesoft.subcut.inject.NewBindingModule
 
 class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
   org.apache.log4j.BasicConfigurator.resetConfiguration()

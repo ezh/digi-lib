@@ -20,10 +20,11 @@ package org.digimead.digi.lib.cache
 
 import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.aop.{ Caching => AOPCaching }
-import org.scala_tools.subcut.inject.NewBindingModule
 import org.scalatest.FunSpec
 import org.scalatest.PrivateMethodTester
 import org.scalatest.matchers.ShouldMatchers
+
+import com.escalatesoft.subcut.inject.NewBindingModule
 
 class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
   org.apache.log4j.BasicConfigurator.resetConfiguration()

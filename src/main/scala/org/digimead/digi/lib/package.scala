@@ -23,7 +23,7 @@ package org.digimead.digi {
   }
 }
 
-package org.scala_tools.subcut.inject {
+package com.escalatesoft.subcut.inject {
   object getBindingKey {
     def apply[T](m: Manifest[T], name: Option[String]) = BindingKey(m, name)
   }

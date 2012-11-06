@@ -20,8 +20,8 @@ package org.digimead.digi.lib
 
 import scala.ref.WeakReference
 
-import org.scala_tools.subcut.inject.BindingModule
-import org.scala_tools.subcut.inject.Injectable
+import com.escalatesoft.subcut.inject.BindingModule
+import com.escalatesoft.subcut.inject.Injectable
 
 object DependencyInjection {
   private var firstRun = true
@@ -52,8 +52,8 @@ object DependencyInjection {
   }
   def reset(config: BindingModule = di) = Option(config).foreach(config => { Option(di).foreach(_ => clear); set(config) })
   def get(): Option[BindingModule] = synchronized { Option(di) }
-  def key[T](name: String)(implicit m: Manifest[T]) = org.scala_tools.subcut.inject.getBindingKey[T](m, Some(name))
-  def key[T](name: Option[String])(implicit m: Manifest[T]) = org.scala_tools.subcut.inject.getBindingKey[T](m, name)
+  def key[T](name: String)(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, Some(name))
+  def key[T](name: Option[String])(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, name)
   /**
    * create wrapper for SubCut toModuleSingle
    * if fixed is true - singleton will initialized only once

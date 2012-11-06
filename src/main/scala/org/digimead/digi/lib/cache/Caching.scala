@@ -27,8 +27,9 @@ import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
 import org.digimead.digi.lib.log.Loggable
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
-import org.scala_tools.subcut.inject.BindingModule
-import org.scala_tools.subcut.inject.Injectable
+
+import com.escalatesoft.subcut.inject.BindingModule
+import com.escalatesoft.subcut.inject.Injectable
 
 class Caching(implicit val bindingModule: BindingModule) extends Injectable with Loggable {
   val inner = inject[Cache[String, Any]]("Cache.Engine")

@@ -21,7 +21,8 @@ package org.digimead.digi.lib
 import org.digimead.digi.lib.cache.Cache
 import org.digimead.digi.lib.cache.Caching
 import org.digimead.digi.lib.cache.NilCache
-import org.scala_tools.subcut.inject.NewBindingModule
+
+import com.escalatesoft.subcut.inject.NewBindingModule
 
 package object cache {
   lazy val default = new NewBindingModule(module => {

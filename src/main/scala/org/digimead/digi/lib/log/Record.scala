@@ -21,8 +21,8 @@ package org.digimead.digi.lib.log
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import org.scala_tools.subcut.inject.BindingModule
-import org.scala_tools.subcut.inject.Injectable
+import com.escalatesoft.subcut.inject.BindingModule
+import com.escalatesoft.subcut.inject.Injectable
 
 class Record(implicit val bindingModule: BindingModule) extends Injectable {
   val builder = inject[Record.MessageBuilder]("Log.Record.Builder")

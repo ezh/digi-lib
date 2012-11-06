@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 import scala.Array.canBuildFrom
 import scala.Option.option2Iterable
-import scala.annotation.implicitNotFound
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.HashMap
@@ -35,9 +34,10 @@ import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
 import org.digimead.digi.lib.log.appender.Appender
 import org.digimead.digi.lib.log.logger.RichLogger
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
-import org.scala_tools.subcut.inject.BindingModule
-import org.scala_tools.subcut.inject.Injectable
 import org.slf4j.LoggerFactory
+
+import com.escalatesoft.subcut.inject.BindingModule
+import com.escalatesoft.subcut.inject.Injectable
 
 class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val record = inject[Record]
