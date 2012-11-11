@@ -38,7 +38,7 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       DependencyInjection.get.foreach(_ => DependencyInjection.clear)
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Logging]('instance)
+      val privateInstance = PrivateMethod[Logging]('implementation)
 
       config.inject[Logging](None) should be theSameInstanceAs (config.inject[Logging](None))
       val logging1 = Logging invokePrivate privateInstance()
@@ -59,7 +59,7 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       DependencyInjection.get.foreach(_ => DependencyInjection.clear)
       val config = org.digimead.digi.lib.log.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Logging]('instance)
+      val privateInstance = PrivateMethod[Logging]('implementation)
       val instance = Logging invokePrivate privateInstance()
       instance.record should not be (null)
       instance.builder should not be (null)
@@ -88,7 +88,7 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       val config = config2 ~ config1
       config.inject[Boolean](Some("Log.TraceWhereEnabled")) should be(true)
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Logging]('instance)
+      val privateInstance = PrivateMethod[Logging]('implementation)
       val instance = Logging invokePrivate privateInstance()
       instance.isTraceWhereEnabled should be(true)
     }

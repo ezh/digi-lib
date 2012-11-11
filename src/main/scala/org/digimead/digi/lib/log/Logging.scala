@@ -147,25 +147,25 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
 }
 
 object Logging extends PersistentInjectable {
-  implicit def instance2Logging(l: Logging.type): Logging = instance
+  implicit def instance2Logging(l: Logging.type): Logging = implementation
   implicit def bindingModule = DependencyInjection()
-  @volatile private var instance = inject[Logging]
-  Runtime.getRuntime().addShutdownHook(new Thread { override def run = Logging.instance.shutdownHook.foreach(_()) })
+  @volatile private var implementation = inject[Logging]
+  Runtime.getRuntime().addShutdownHook(new Thread { override def run = Logging.implementation.shutdownHook.foreach(_()) })
 
   def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String): Unit =
     addToLog(date, tid, level, tag, message, None)
   def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String, throwable: Option[Throwable]): Unit =
-    addToLog(date, tid, level, tag, message, throwable, instance.record.pid)
+    addToLog(date, tid, level, tag, message, throwable, implementation.record.pid)
   def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int): Unit =
-    if (instance.bufferedThread.nonEmpty)
-      instance.offer(instance.record.builder(date, tid, level, tag, message, throwable, pid))
+    if (implementation.bufferedThread.nonEmpty)
+      implementation.offer(implementation.record.builder(date, tid, level, tag, message, throwable, pid))
     else
       level match {
-        case Record.Level.Trace => instance.commonLogger.trace(message)
-        case Record.Level.Debug => instance.commonLogger.debug(message)
-        case Record.Level.Info => instance.commonLogger.info(message)
-        case Record.Level.Warn => instance.commonLogger.warn(message)
-        case Record.Level.Error => instance.commonLogger.error(message)
+        case Record.Level.Trace => implementation.commonLogger.trace(message)
+        case Record.Level.Debug => implementation.commonLogger.debug(message)
+        case Record.Level.Info => implementation.commonLogger.info(message)
+        case Record.Level.Warn => implementation.commonLogger.warn(message)
+        case Record.Level.Error => implementation.commonLogger.error(message)
       }
   def getLogger(clazz: Class[_]): RichLogger = {
     val stackArray = Thread.currentThread.getStackTrace().dropWhile(_.getClassName != getClass.getName)
@@ -177,25 +177,26 @@ object Logging extends PersistentInjectable {
     else
       fileRaw.head
     val loggerName = if (clazz.getClass().toString.last == '$') // add object mark to file name
-      instance.logPrefix + clazz.getClass.getPackage.getName.split("""\.""").last + "." + fileParsed + "$"
+      implementation.logPrefix + clazz.getClass.getPackage.getName.split("""\.""").last + "." + fileParsed + "$"
     else
-      instance.logPrefix + clazz.getClass.getPackage.getName.split("""\.""").last + "." + fileParsed
+      implementation.logPrefix + clazz.getClass.getPackage.getName.split("""\.""").last + "." + fileParsed
     getLogger(loggerName)
   }
   def getLogger(name: String): RichLogger =
-    instance.richLogger.get(name) match {
+    implementation.richLogger.get(name) match {
       case Some(logger) => logger
       case None =>
-        val logger = instance.builder(name)
-        instance.richLogger(name) = logger
+        val logger = implementation.builder(name)
+        implementation.richLogger(name) = logger
         Event.publish(new Event.RegisterLogger(logger))
         logger
 
     }
-  def commitInjection() { instance.init }
+  def inner() = implementation
+  def commitInjection() { implementation.init }
   def updateInjection() {
-    instance.deinit()
-    instance = inject[Logging]
+    implementation.deinit()
+    implementation = inject[Logging]
   }
 
   abstract class BufferedLogThread extends Thread("Generic buffered logger for " + Logging.getClass.getName) {
@@ -210,7 +211,7 @@ object Logging extends PersistentInjectable {
       super.publish(event)
     } catch {
       case e =>
-        instance.commonLogger.error(e.getMessage(), e)
+        implementation.commonLogger.error(e.getMessage(), e)
     }
     case class Incoming(val record: Record.Message) extends Event
     case class Outgoing(val record: Record.Message) extends Event

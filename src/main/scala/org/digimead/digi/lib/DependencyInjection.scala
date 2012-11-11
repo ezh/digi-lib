@@ -56,18 +56,11 @@ object DependencyInjection {
   def key[T](name: Option[String])(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, name)
   /**
    * create wrapper for SubCut toModuleSingle
-   * if fixed is true - singleton will initialized only once
-   * if fixed is false - singleton will reinitialized if module changed
+   * singleton will initialized only once
    */
-  def makeSingleton[T](f: (BindingModule) => T, fixed: Boolean = false): BindingModule => T = {
-    @volatile var savedModule = new WeakReference[BindingModule](null)
-    @volatile var saved: T = null.asInstanceOf[T]
-    (newModule) =>
-      if ((!fixed || saved == null) && savedModule.get != Some(newModule)) {
-        savedModule = new WeakReference[BindingModule](newModule)
-        saved = f(newModule)
-        saved
-      } else saved
+  def makeInitOnce[T](f: (BindingModule) => T): BindingModule => T = {
+    @volatile var saved: Option[T] = None
+    (newModule) => saved getOrElse { saved = Some(f(newModule)); saved.get }
   }
   private def registerInjectable(obj: PersistentInjectable) = synchronized {
     injectables = injectables :+ new WeakReference(obj)

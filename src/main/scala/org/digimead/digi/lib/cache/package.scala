@@ -28,7 +28,6 @@ package object cache {
   lazy val default = new NewBindingModule(module => {
     module.bind[Cache[String, Any]] identifiedBy "Cache.Engine" toSingle { new NilCache[String, Any] }
     module.bind[Long] identifiedBy "Cache.TTL" toSingle { 1000 * 60 * 10L } // 10 minutes
-    lazy val cachingSingleton = DependencyInjection.makeSingleton(implicit module => new Caching)
-    module.bind[Caching] toModuleSingle { cachingSingleton(_) }
+    module.bind[Caching] toModuleSingle { implicit module => new Caching }
   })
 }

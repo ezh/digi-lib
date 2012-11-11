@@ -24,6 +24,9 @@ import org.digimead.digi.lib.log.Logging
 import org.digimead.digi.lib.log.Logging.instance2Logging
 import org.digimead.digi.lib.log.Record
 
+/*
+ * didn't used to involve implicits because of lack 2.8.x support
+ */
 class BaseLogger(val loggerName: java.lang.String,
   val isTraceEnabled: Boolean,
   val isDebugEnabled: Boolean,
@@ -31,34 +34,34 @@ class BaseLogger(val loggerName: java.lang.String,
   val isWarnEnabled: Boolean,
   val isErrorEnabled: Boolean) extends AbstractBaseLogger(loggerName) {
   def trace(msg: String): Unit = if (isTraceEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
-      msg, None, Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
+      msg, None, Logging.inner.record.pid))
   def trace(msg: String, t: Throwable): Unit = if (isTraceEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
-      msg, Some(t), Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
+      msg, Some(t), Logging.inner.record.pid))
   def debug(msg: String): Unit = if (isDebugEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
-      msg, None, Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
+      msg, None, Logging.inner.record.pid))
   def debug(msg: String, t: Throwable): Unit = if (isDebugEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
-      msg, Some(t), Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
+      msg, Some(t), Logging.inner.record.pid))
   def info(msg: String): Unit = if (isInfoEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
-      msg, None, Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
+      msg, None, Logging.inner.record.pid))
   def info(msg: String, t: Throwable): Unit = if (isInfoEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
-      msg, Some(t), Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
+      msg, Some(t), Logging.inner.record.pid))
   def warn(msg: String): Unit = if (isWarnEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
-      msg, None, Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
+      msg, None, Logging.inner.record.pid))
   def warn(msg: String, t: Throwable): Unit = if (isWarnEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
-      msg, Some(t), Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
+      msg, Some(t), Logging.inner.record.pid))
   def error(msg: String): Unit = if (isErrorEnabled)
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
-      msg, None, Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
+      msg, None, Logging.inner.record.pid))
   // always enabled
   def error(msg: String, t: Throwable): Unit =
-    Logging.offer(Logging.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
-      msg, Some(t), Logging.record.pid))
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
+      msg, Some(t), Logging.inner.record.pid))
 }
