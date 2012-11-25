@@ -21,6 +21,8 @@ package org.digimead.digi.lib
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import scala.annotation.implicitNotFound
+
 import org.digimead.digi.lib.log.Logging
 import org.digimead.digi.lib.log.MDC
 import org.digimead.digi.lib.log.NDC
@@ -63,6 +65,7 @@ package object log {
       if (ndc.isEmpty()) ndc else "{" + ndc + "}"
     }
   }) ~ default
+  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.log.Logging$")
 }
 
 package log {

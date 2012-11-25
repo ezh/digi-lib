@@ -147,7 +147,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
 }
 
 object Logging extends PersistentInjectable {
-  implicit def instance2Logging(l: Logging.type): Logging = implementation
+  implicit def Logging2implementation(l: Logging.type): Logging = implementation
   implicit def bindingModule = DependencyInjection()
   @volatile private var implementation = inject[Logging]
   Runtime.getRuntime().addShutdownHook(new Thread { override def run = Logging.implementation.shutdownHook.foreach(_()) })
@@ -193,7 +193,7 @@ object Logging extends PersistentInjectable {
 
     }
   def inner() = implementation
-  def commitInjection() { implementation.init }
+  def commitInjection() { implementation.init() }
   def updateInjection() {
     implementation.deinit()
     implementation = inject[Logging]

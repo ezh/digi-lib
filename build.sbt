@@ -15,7 +15,7 @@
 
 name := "Digi-Lib"
 
-description := "Base library for digi components"
+description := "Base library for Digi components"
 
 organization := "org.digimead"
 

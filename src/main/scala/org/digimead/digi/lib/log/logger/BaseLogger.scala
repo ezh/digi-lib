@@ -21,7 +21,6 @@ package org.digimead.digi.lib.log.logger
 import java.util.Date
 
 import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Logging.instance2Logging
 import org.digimead.digi.lib.log.Record
 
 /*

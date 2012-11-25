@@ -18,6 +18,7 @@
 
 package org.digimead.digi.lib
 
+import scala.collection.mutable
 import scala.ref.WeakReference
 
 import com.escalatesoft.subcut.inject.BindingModule
@@ -26,7 +27,12 @@ import com.escalatesoft.subcut.inject.Injectable
 object DependencyInjection {
   private var firstRun = true
   private var di: BindingModule = null
-  private var injectables = Seq[WeakReference[PersistentInjectable]]()
+  /**
+   * map of Class[PersistentInjectable]
+   * It is impossible to use Class[PersistentInjectable] as key
+   *  because it starts Scala object initialization
+   */
+  private val injectables = new mutable.HashMap[String, WeakReference[PersistentInjectable]] with mutable.SynchronizedMap[String, WeakReference[PersistentInjectable]]
 
   def apply(): BindingModule = synchronized {
     assert(di != null, "dependency injection not initialized")
@@ -39,9 +45,9 @@ object DependencyInjection {
     if (firstRun)
       firstRun = false
     else
-      injectables.foreach(_.get.map(_.updateInjection))
+      injectables.foreach { clazz => getPersistentInjectable(clazz._1).map(_.updateInjection) }
     injectionHook
-    injectables.foreach(_.get.map(_.commitInjection))
+    injectables.foreach { clazz => getPersistentInjectable(clazz._1).map(_.commitInjection) }
     di
   }
   def clear(): BindingModule = synchronized {
@@ -62,11 +68,40 @@ object DependencyInjection {
     @volatile var saved: Option[T] = None
     (newModule) => saved getOrElse { saved = Some(f(newModule)); saved.get }
   }
-  private def registerInjectable(obj: PersistentInjectable) = synchronized {
-    injectables = injectables :+ new WeakReference(obj)
+  /**
+   * add persistent object in injectables
+   */
+  def setPersistentInjectable(persistentObjectClassName: String) = {
+    if (!injectables.contains(persistentObjectClassName))
+      injectables(persistentObjectClassName) = new WeakReference(null)
   }
+  /**
+   * add/update persistent object in injectables
+   */
+  def setPersistentInjectable(pobj: PersistentInjectable) =
+    injectables(pobj.getClass.getName()) = new WeakReference(pobj)
+  /**
+   * get persistent object from injectables
+   */
+  private def getPersistentInjectable(persistentObjectClassName: String): Option[PersistentInjectable] =
+    injectables.get(persistentObjectClassName) match {
+      case Some(pobj) =>
+        pobj.get orElse {
+          try {
+            val clazz = Class.forName(persistentObjectClassName).asInstanceOf[Class[PersistentInjectable]]
+            val result = clazz.getField("MODULE$").get(clazz).asInstanceOf[PersistentInjectable]
+            injectables(persistentObjectClassName) = new WeakReference(result)
+            Some(result)
+          } catch {
+            case e =>
+              None
+          }
+        }
+      case None =>
+        None
+    }
   trait PersistentInjectable extends Injectable {
-    DependencyInjection.registerInjectable(this)
+    setPersistentInjectable(this)
 
     def commitInjection()
     def updateInjection()

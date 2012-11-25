@@ -60,7 +60,6 @@ package org.digimead.digi.lib.aop
 import org.aspectj.lang.Signature
 import org.digimead.digi.lib.log.Loggable
 import org.digimead.digi.lib.log.{ Logging => LLogging }
-import org.digimead.digi.lib.log.Logging.instance2Logging
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 
 object Logging {
