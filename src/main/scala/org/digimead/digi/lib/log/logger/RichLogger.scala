@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ package org.digimead.digi.lib.log.logger
 import scala.annotation.implicitNotFound
 
 import org.digimead.digi.lib.log.Logging
+
+import scala.language.implicitConversions
 
 @implicitNotFound(msg = "please define implicit RichLogger")
 class RichLogger private[log] (val base: org.slf4j.Logger, val isTraceWhereEnabled: Boolean) {

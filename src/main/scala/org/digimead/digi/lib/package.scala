@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,14 @@
  * limitations under the License.
  */
 
+import com.escalatesoft.subcut.inject.NewBindingModule
+import akka.actor.ActorSystem
+
 package org.digimead.digi {
   package object lib {
-    lazy val default = log.default ~ cache.default
+    lazy val default = log.default ~ cache.default ~ new NewBindingModule(module => {
+      module.bind[ActorSystem] toSingle { ActorSystem("DigiSystem") }
+    })
     lazy val defaultWithDC = log.defaultWithDC ~ cache.default
   }
 }

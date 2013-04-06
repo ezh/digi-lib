@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import com.escalatesoft.subcut.inject.NewBindingModule
 
-class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
+class LogSpec extends FunSpec with ShouldMatchers {
   org.apache.log4j.BasicConfigurator.resetConfiguration()
   org.apache.log4j.BasicConfigurator.configure()
 
@@ -38,12 +38,11 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       DependencyInjection.get.foreach(_ => DependencyInjection.clear)
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Logging]('implementation)
 
       config.inject[Logging](None) should be theSameInstanceAs (config.inject[Logging](None))
-      val logging1 = Logging invokePrivate privateInstance()
+      val logging1 = Logging inner ()
       DependencyInjection.reset()
-      val logging2 = Logging invokePrivate privateInstance()
+      val logging2 = Logging inner ()
       logging1 should be theSameInstanceAs (logging2)
       logging1.record should be theSameInstanceAs (logging2.record)
       logging1.record.dateFormat should be theSameInstanceAs (logging2.record.dateFormat)
@@ -51,7 +50,7 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       logging1.builder should not be theSameInstanceAs(config.inject[(String) => RichLogger](Some("Log.Builder")))
 
       DependencyInjection.reset(config ~ (NewBindingModule.newBindingModule(module => {})))
-      val logging3 = Logging invokePrivate privateInstance()
+      val logging3 = Logging inner ()
       logging1 should not be theSameInstanceAs(logging3)
       logging2 should not be theSameInstanceAs(logging3)
     }
@@ -59,8 +58,7 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       DependencyInjection.get.foreach(_ => DependencyInjection.clear)
       val config = org.digimead.digi.lib.log.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Logging]('implementation)
-      val instance = Logging invokePrivate privateInstance()
+      val instance = Logging inner ()
       instance.record should not be (null)
       instance.builder should not be (null)
       instance.isTraceWhereEnabled should be(false)
@@ -88,8 +86,7 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       val config = config2 ~ config1
       config.inject[Boolean](Some("Log.TraceWhereEnabled")) should be(true)
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Logging]('implementation)
-      val instance = Logging invokePrivate privateInstance()
+      val instance = Logging inner ()
       instance.isTraceWhereEnabled should be(true)
     }
     it("should call deinit on reinitialization") {
@@ -111,9 +108,6 @@ class LogSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       DependencyInjection.set(config2 ~ config1)
       // clear
       DependencyInjection.get.foreach(_ => DependencyInjection.clear)
-      deinitCall should be(false)
-      // deinit
-      DependencyInjection.set(config2 ~ config1)
       deinitCall should be(true)
     }
   }

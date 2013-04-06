@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+// Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ organization := "org.digimead"
 
 version <<= (baseDirectory) { (b) => scala.io.Source.fromFile(b / "version").mkString.trim }
 
-scalaVersion := "2.9.2"
+crossScalaVersions := Seq("2.10.1")
 
-crossScalaVersions := Seq("2.8.2", "2.9.0", "2.9.0-1", "2.9.1", "2.9.2")
+scalaVersion := "2.10.1"
 
-scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit") ++
+scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature") ++
   (if (true || (System getProperty "java.runtime.version" startsWith "1.7")) Seq() else Seq("-optimize")) // -optimize fails with jdk7
 
 javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
@@ -38,9 +38,10 @@ resolvers += ("snapshots" at "http://oss.sonatype.org/content/repositories/snaps
 
 libraryDependencies ++= {
   Seq(
-    "org.slf4j" % "slf4j-api" % "1.7.1",
+    "com.escalatesoft.subcut" %% "subcut" % "2.0",
+    "com.typesafe.akka" %% "akka-actor" % "2.1.2",
     "org.aspectj" % "aspectjrt" % "1.7.1",
-    "com.escalatesoft.subcut" %% "subcut" % "2.0-SNAPSHOT"
+    "org.slf4j" % "slf4j-api" % "1.7.1"
   )
 }
 

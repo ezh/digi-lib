@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 package org.digimead.digi.lib
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 import scala.collection.mutable
 import scala.ref.WeakReference
 
@@ -25,7 +27,7 @@ import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
 
 object DependencyInjection {
-  private var firstRun = true
+  private val init = new AtomicBoolean(true)
   private var di: BindingModule = null
   /**
    * map of Class[PersistentInjectable]
@@ -35,24 +37,33 @@ object DependencyInjection {
   private val injectables = new mutable.HashMap[String, WeakReference[PersistentInjectable]] with mutable.SynchronizedMap[String, WeakReference[PersistentInjectable]]
 
   def apply(): BindingModule = synchronized {
-    assert(di != null, "dependency injection not initialized")
+    assert(di != null, "dependency injection is not initialized")
     di
   }
+  def assertLazy[T: Manifest](name: Option[String], module: BindingModule) = Option(module).foreach { m =>
+    val bindingKey = key[T](name)
+    assert(m.bindings.isDefinedAt(bindingKey), s"$bindingKey not found")
+    val bindingClassName = m.bindings(bindingKey).getClass.getName
+    assert(bindingClassName.endsWith(".LazyModuleInstanceProvider") || bindingClassName.endsWith(".LazyInstanceProvider"),
+      s"Unexpected binding provider for $bindingKey: $bindingClassName. Expect LazyInstanceProvider or LazyModuleInstanceProvider.")
+  }
   def set(di: BindingModule, injectionHook: => Unit = {}): BindingModule = synchronized {
-    assert(this.di == null, "dependency injection already initialized")
-    this.di = di
+    assert(this.di == null, "dependency injection is already initialized")
     // We set BindingModule before any Injectable created at the beginning, so injectables map is empty
-    if (firstRun)
-      firstRun = false
-    else
-      injectables.foreach { clazz => getPersistentInjectable(clazz._1).map(_.updateInjection) }
+    if (!init.compareAndSet(true, false))
+      Option(di).foreach(module => injectables.foreach(clazz =>
+        getPersistentInjectable(clazz._1).map(_.beforeInjection(module))))
+    this.di = di
     injectionHook
-    injectables.foreach { clazz => getPersistentInjectable(clazz._1).map(_.commitInjection) }
+    Option(di).foreach(module => injectables.foreach(clazz =>
+      getPersistentInjectable(clazz._1).map(_.afterInjection(module))))
     di
   }
   def clear(): BindingModule = synchronized {
-    assert(di != null, "dependency injection not initialized")
+    assert(di != null, "dependency injection is not initialized")
     val result = this.di
+    Option(result).foreach(module => injectables.foreach(clazz =>
+      getPersistentInjectable(clazz._1).map(_.onClearInjection(module))))
     this.di = null
     result
   }
@@ -93,7 +104,8 @@ object DependencyInjection {
             injectables(persistentObjectClassName) = new WeakReference(result)
             Some(result)
           } catch {
-            case e =>
+            // This catches all Throwables because we must return None if something wrong
+            case e: Throwable =>
               None
           }
         }
@@ -103,7 +115,8 @@ object DependencyInjection {
   trait PersistentInjectable extends Injectable {
     setPersistentInjectable(this)
 
-    def commitInjection()
-    def updateInjection()
+    def afterInjection(newModule: BindingModule) {}
+    def beforeInjection(newModule: BindingModule) {}
+    def onClearInjection(oldModule: BindingModule) {}
   }
 }

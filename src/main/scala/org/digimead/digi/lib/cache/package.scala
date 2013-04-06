@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,4 +30,6 @@ package object cache {
     module.bind[Long] identifiedBy "Cache.TTL" toSingle { 1000 * 60 * 10L } // 10 minutes
     module.bind[Caching] toModuleSingle { implicit module => new Caching }
   })
+  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.cache.Caching$")
+  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.aop.Caching$")
 }

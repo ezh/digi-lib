@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import java.util.Date
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import scala.Array.canBuildFrom
-import scala.Option.option2Iterable
+import scala.annotation.implicitNotFound
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Publisher
 import scala.collection.mutable.SynchronizedMap
+import scala.util.control.Breaks.break
+import scala.util.control.Breaks.breakable
 
 import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
@@ -38,6 +40,8 @@ import org.slf4j.LoggerFactory
 
 import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
+
+import scala.language.implicitConversions
 
 class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val record = inject[Record]
@@ -93,16 +97,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   def offer(record: Record.Message) = bufferedQueue.synchronized {
     bufferedQueue.offer(record)
     bufferedQueue.notifyAll
-    try {
-      Logging.Event.publish(new Logging.Event.Incoming(record))
-    } catch {
-      case e =>
-        bufferedQueue.offer(this.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug,
-          commonLogger.getName, e.getMessage match {
-            case null => ""
-            case message => message
-          }, Some(e), this.record.pid))
-    }
+    Logging.Event.publish(new Logging.Event.Incoming(record))
   }
   def flush(timeout: Int): Int = synchronized {
     if (bufferedAppender.isEmpty)
@@ -119,16 +114,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
       val limit = if (n <= bufferedFlushLimit) (n - accumulator) else bufferedFlushLimit
       while (records < limit && !bufferedQueue.isEmpty()) {
         bufferedSlice(records) = bufferedQueue.poll().asInstanceOf[Record.Message]
-        try {
-          Logging.Event.publish(new Logging.Event.Outgoing(bufferedSlice(records)))
-        } catch {
-          case e =>
-            Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName,
-              e.getMessage match {
-                case null => ""
-                case message => message
-              }, Some(e))
-        }
+        Logging.Event.publish(new Logging.Event.Outgoing(bufferedSlice(records)))
         records += 1
       }
       bufferedAppender.foreach(_(bufferedSlice.take(records)))
@@ -147,16 +133,20 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
 }
 
 object Logging extends PersistentInjectable {
-  implicit def Logging2implementation(l: Logging.type): Logging = implementation
+  implicit def Logging2implementation(l: Logging.type): Logging = inner
   implicit def bindingModule = DependencyInjection()
-  @volatile private var implementation = inject[Logging]
-  Runtime.getRuntime().addShutdownHook(new Thread { override def run = Logging.implementation.shutdownHook.foreach(_()) })
+  private val loggingObjectName = getClass.getName
+  private val loggableClassName = classOf[Loggable].getName
+  Runtime.getRuntime().addShutdownHook(new Thread {
+    override def run = if (DependencyInjection.get.nonEmpty) Logging.injectOptional[Logging].foreach(_.shutdownHook.foreach(_()))
+  })
 
   def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String): Unit =
     addToLog(date, tid, level, tag, message, None)
   def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String, throwable: Option[Throwable]): Unit =
-    addToLog(date, tid, level, tag, message, throwable, implementation.record.pid)
-  def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int): Unit =
+    addToLog(date, tid, level, tag, message, throwable, inner.record.pid)
+  def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int): Unit = {
+    val implementation = inner()
     if (implementation.bufferedThread.nonEmpty)
       implementation.offer(implementation.record.builder(date, tid, level, tag, message, throwable, pid))
     else
@@ -167,22 +157,48 @@ object Logging extends PersistentInjectable {
         case Record.Level.Warn => implementation.commonLogger.warn(message)
         case Record.Level.Error => implementation.commonLogger.error(message)
       }
+  }
+  /**
+   * transform clazz to filename and return logger name
+   */
   def getLogger(clazz: Class[_]): RichLogger = {
     val stackArray = Thread.currentThread.getStackTrace().dropWhile(_.getClassName != getClass.getName)
-    val stack = if (stackArray(1).getFileName != stackArray(0).getFileName)
-      stackArray(1) else stackArray(2)
-    val fileRaw = stack.getFileName.split("""\.""")
-    val fileParsed = if (fileRaw.length > 1)
-      fileRaw.dropRight(1).mkString(".")
-    else
-      fileRaw.head
-    val loggerName = if (clazz.getClass().toString.last == '$') // add object mark to file name
-      implementation.logPrefix + clazz.getClass.getPackage.getName.split("""\.""").last + "." + fileParsed + "$"
-    else
-      implementation.logPrefix + clazz.getClass.getPackage.getName.split("""\.""").last + "." + fileParsed
-    getLogger(loggerName)
+    // current class element
+    var thisMethodElement: Option[StackTraceElement] = None
+    // client class element
+    var thatMethodElement: Option[StackTraceElement] = None
+    breakable {
+      for (i <- 0 until stackArray.size) {
+        thisMethodElement match {
+          case Some(element) if stackArray(i).getFileName != element.getFileName &&
+            !stackArray(i).getClassName.startsWith(loggableClassName) =>
+            // client method element found
+            thatMethodElement = Some(stackArray(i))
+            break
+          case Some(element) =>
+          // skip element before thatMethodElement
+          case None if stackArray(i).getClassName != loggingObjectName =>
+            // current method element found
+            thisMethodElement = Some(stackArray(i))
+          case None =>
+          // skip element before thisMethodElement
+        }
+      }
+    }
+    val namePrefix = inner.logPrefix
+    val name1stPart = clazz.getPackage.getName.split("""\.""").last
+    val name2ndPart = thatMethodElement match {
+      case Some(element) =>
+        val fileRaw = element.getFileName.split("""\.""")
+        if (fileRaw.length > 1) fileRaw.dropRight(1).mkString(".") else fileRaw.head
+      case None =>
+        clazz.getName.split("""[\.$]""").last
+    }
+    val nameSuffix = if (clazz.getClass().toString.last == '$') "$" else ""
+    getLogger(namePrefix + name1stPart + "." + name2ndPart + nameSuffix)
   }
-  def getLogger(name: String): RichLogger =
+  def getLogger(name: String): RichLogger = {
+    val implementation = inner
     implementation.richLogger.get(name) match {
       case Some(logger) => logger
       case None =>
@@ -190,14 +206,25 @@ object Logging extends PersistentInjectable {
         implementation.richLogger(name) = logger
         Event.publish(new Event.RegisterLogger(logger))
         logger
-
     }
-  def inner() = implementation
-  def commitInjection() { implementation.init() }
-  def updateInjection() {
-    implementation.deinit()
-    implementation = inject[Logging]
   }
+
+  /*
+   * dependency injection
+   */
+  def inner() = inject[Logging]
+  override def afterInjection(newModule: BindingModule) {
+    inner.init()
+  }
+  override def beforeInjection(newModule: BindingModule) {
+    DependencyInjection.assertLazy[Logging](None, newModule)
+  }
+  override def onClearInjection(oldModule: BindingModule) {
+    inner.deinit()
+  }
+  /*
+   * dependency injection
+   */
 
   abstract class BufferedLogThread extends Thread("Generic buffered logger for " + Logging.getClass.getName) {
     def init(): Unit
@@ -210,8 +237,9 @@ object Logging extends PersistentInjectable {
     override protected[Logging] def publish(event: Event) = try {
       super.publish(event)
     } catch {
-      case e =>
-        implementation.commonLogger.error(e.getMessage(), e)
+      // This catches all Throwables because we want to record exception to log file
+      case e: Throwable =>
+        inner.commonLogger.error(e.getMessage(), e)
     }
     case class Incoming(val record: Record.Message) extends Event
     case class Outgoing(val record: Record.Message) extends Event

@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,11 @@ import com.escalatesoft.subcut.inject.NewBindingModule
 class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
   org.apache.log4j.BasicConfigurator.resetConfiguration()
   org.apache.log4j.BasicConfigurator.configure()
+  Caching
 
   describe("A Cache") {
     it("should have proper reinitialization") {
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+      DependencyInjection.get.foreach { _ => DependencyInjection.clear }
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
       val privateInstance = PrivateMethod[Caching]('instance)
@@ -51,7 +52,7 @@ class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       caching2 should not be theSameInstanceAs(caching3)
     }
     it("should create singeton with default parameters") {
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+      DependencyInjection.get.foreach { _ => DependencyInjection.clear }
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
       val privateInstance = PrivateMethod[Caching]('instance)
@@ -60,7 +61,7 @@ class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       instance.ttl should be(org.digimead.digi.lib.cache.default.inject[Long](Some("Cache.TTL")))
     }
     it("should create singeton with apropriate parameters") {
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+      DependencyInjection.get.foreach { _ => DependencyInjection.clear }
       val innerCacheImplementation = new NilCache[String, Any]
       DependencyInjection.set(new NewBindingModule(module => {
         module.bind[Cache[String, Any]] identifiedBy "Cache.Engine" toSingle { innerCacheImplementation }
