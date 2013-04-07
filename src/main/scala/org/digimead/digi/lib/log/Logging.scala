@@ -32,7 +32,6 @@ import scala.util.control.Breaks.break
 import scala.util.control.Breaks.breakable
 
 import org.digimead.digi.lib.DependencyInjection
-import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
 import org.digimead.digi.lib.log.appender.Appender
 import org.digimead.digi.lib.log.logger.RichLogger
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
@@ -132,7 +131,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   override def toString() = "default Logging implementation"
 }
 
-object Logging extends PersistentInjectable {
+object Logging extends DependencyInjection.PersistentInjectable {
   implicit def Logging2implementation(l: Logging.type): Logging = inner
   implicit def bindingModule = DependencyInjection()
   private val loggingObjectName = getClass.getName

@@ -22,7 +22,6 @@ import scala.Array.canBuildFrom
 import scala.concurrent.Await
 
 import org.digimead.digi.lib.DependencyInjection
-import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
 import org.digimead.digi.lib.cache.{ Caching => CCaching }
 import org.digimead.digi.lib.log.Loggable
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
@@ -111,11 +110,12 @@ abstract class Caching extends Loggable {
   }
 }
 
-object Caching extends PersistentInjectable {
+object Caching extends DependencyInjection.PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
   final val BoxedTrue = Boolean.box(true)
   final val BoxedFalse = Boolean.box(false)
-  @volatile private var instance: CCaching = _
+  /** The caching instance cache */
+  private var instance: CCaching = inject[CCaching]
 
   /*
    * dependency injection

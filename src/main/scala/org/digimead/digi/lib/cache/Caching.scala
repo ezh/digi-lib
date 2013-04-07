@@ -27,7 +27,6 @@ import scala.concurrent.duration.DurationInt
 import scala.ref.SoftReference
 
 import org.digimead.digi.lib.DependencyInjection
-import org.digimead.digi.lib.DependencyInjection.PersistentInjectable
 import org.digimead.digi.lib.log.Loggable
 import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 
@@ -138,7 +137,7 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
   }
 }
 
-object Caching extends PersistentInjectable {
+object Caching extends DependencyInjection.PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
   Runtime.getRuntime().addShutdownHook(new Thread {
     override def run = if (DependencyInjection.get.nonEmpty) Caching.injectOptional[Caching].foreach(_.shutdownHook.foreach(_()))
