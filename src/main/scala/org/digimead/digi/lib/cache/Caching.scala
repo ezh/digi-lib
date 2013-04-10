@@ -139,6 +139,8 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
 
 object Caching extends DependencyInjection.PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
+  /** Caching implementation DI cache */
+  @volatile private var implementation = inject[Caching]
   Runtime.getRuntime().addShutdownHook(new Thread {
     override def run = if (DependencyInjection.get.nonEmpty) Caching.injectOptional[Caching].foreach(_.shutdownHook.foreach(_()))
   })
@@ -146,16 +148,15 @@ object Caching extends DependencyInjection.PersistentInjectable {
   /*
    * dependency injection
    */
-  def instance: Caching = inject[Caching]
+  def instance: Caching = implementation
   def actorSystem: ActorSystem = inject[ActorSystem]
-  override def afterInjection(newModule: BindingModule) {
+  override def injectionAfter(newModule: BindingModule) {
     instance.init
   }
-  override def beforeInjection(newModule: BindingModule) {
-    DependencyInjection.assertLazy[Caching](None, newModule)
+  override def injectionBefore(newModule: BindingModule) {
     DependencyInjection.assertLazy[ActorSystem](None, newModule)
   }
-  override def onClearInjection(oldModule: BindingModule) {
+  override def injectionOnClear(oldModule: BindingModule) {
     instance.deinit()
   }
 

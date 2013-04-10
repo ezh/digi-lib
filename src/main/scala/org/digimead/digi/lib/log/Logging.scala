@@ -136,6 +136,8 @@ object Logging extends DependencyInjection.PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
   private val loggingObjectName = getClass.getName
   private val loggableClassName = classOf[Loggable].getName
+  /** Logging implementation DI cache */
+  @volatile private var implementation = inject[Logging]
   Runtime.getRuntime().addShutdownHook(new Thread {
     override def run = if (DependencyInjection.get.nonEmpty) Logging.injectOptional[Logging].foreach(_.shutdownHook.foreach(_()))
   })
@@ -211,19 +213,14 @@ object Logging extends DependencyInjection.PersistentInjectable {
   /*
    * dependency injection
    */
-  def inner() = inject[Logging]
-  override def afterInjection(newModule: BindingModule) {
+  def inner() = implementation
+  override def injectionAfter(newModule: BindingModule) {
+    implementation = inject[Logging]
     inner.init()
   }
-  override def beforeInjection(newModule: BindingModule) {
-    DependencyInjection.assertLazy[Logging](None, newModule)
-  }
-  override def onClearInjection(oldModule: BindingModule) {
+  override def injectionOnClear(oldModule: BindingModule) {
     inner.deinit()
   }
-  /*
-   * dependency injection
-   */
 
   abstract class BufferedLogThread extends Thread("Generic buffered logger for " + Logging.getClass.getName) {
     def init(): Unit

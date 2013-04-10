@@ -115,15 +115,15 @@ object Caching extends DependencyInjection.PersistentInjectable {
   final val BoxedTrue = Boolean.box(true)
   final val BoxedFalse = Boolean.box(false)
   /** The caching instance cache */
-  private var instance: CCaching = inject[CCaching]
+  @volatile private var instance: CCaching = inject[CCaching]
 
   /*
    * dependency injection
    */
-  override def afterInjection(newModule: BindingModule) {
+  override def injectionAfter(newModule: BindingModule) {
     instance = inject[CCaching]
   }
-  override def beforeInjection(newModule: BindingModule) {
+  override def injectionBefore(newModule: BindingModule) {
     DependencyInjection.assertLazy[CCaching](None, newModule)
   }
 
