@@ -56,7 +56,7 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
   }
   def deinit() {
     log.debug("deinitialize " + this.toString)
-    val stopped = akka.pattern.Patterns.gracefulStop(Caching.instance.actor, 5 seconds, Caching.actorSystem)
+    val stopped = akka.pattern.Patterns.gracefulStop(Caching.inner.actor, 5 seconds, Caching.actorSystem)
     scala.concurrent.Await.result(stopped, 5 seconds)
   }
   override def toString() = "default Caching implementation"
@@ -139,6 +139,8 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
 
 object Caching extends DependencyInjection.PersistentInjectable {
   implicit def bindingModule = DependencyInjection()
+  /** Actor system DI cache */
+  @volatile private var system = inject[ActorSystem]
   /** Caching implementation DI cache */
   @volatile private var implementation = inject[Caching]
   Runtime.getRuntime().addShutdownHook(new Thread {
@@ -148,21 +150,23 @@ object Caching extends DependencyInjection.PersistentInjectable {
   /*
    * dependency injection
    */
-  def instance: Caching = implementation
-  def actorSystem: ActorSystem = inject[ActorSystem]
+  def inner(): Caching = implementation
+  def actorSystem(): ActorSystem = system
   override def injectionAfter(newModule: BindingModule) {
-    instance.init
+    system = inject[ActorSystem]
+    implementation = inject[Caching]
+    inner.init
   }
   override def injectionBefore(newModule: BindingModule) {
     DependencyInjection.assertLazy[ActorSystem](None, newModule)
   }
   override def injectionOnClear(oldModule: BindingModule) {
-    instance.deinit()
+    inner.deinit()
   }
 
   object Message {
-    case class Get(namespace: scala.Enumeration#Value, key: String, ttl: Long = Caching.instance.ttl)
-    case class GetByID(namespaceId: Int, key: String, ttl: Long = Caching.instance.ttl)
+    case class Get(namespace: scala.Enumeration#Value, key: String, ttl: Long = Caching.inner.ttl)
+    case class GetByID(namespaceId: Int, key: String, ttl: Long = Caching.inner.ttl)
     case class Update(namespace: scala.Enumeration#Value, key: String, value: Any)
     case class UpdateByID(namespaceId: Int, key: String, value: Any)
     case class UpdateMany(namespace: scala.Enumeration#Value, updates: Iterable[(String, Any)])

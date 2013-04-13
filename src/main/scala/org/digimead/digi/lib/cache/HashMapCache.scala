@@ -27,13 +27,13 @@ import scala.language.postfixOps
 
 class HashMapCache extends Cache[String, Any] with Loggable {
   def get(namespace: scala.Enumeration#Value, key: String) =
-    get(namespace, key, Caching.instance.ttl)
+    get(namespace, key, Caching.inner.ttl)
   def get(namespace: scala.Enumeration#Value, key: String, period: Long): Option[Any] =
     get(namespace.id, key, period)
   def get(namespaceID: Int, key: String, period: Long): Option[Any] = {
     log.trace("search cached value for namespace id " + namespaceID + " and key " + key)
     val ref = namespaceID + " " + key
-    Caching.instance.map.get(ref).flatMap(_.get) match {
+    Caching.inner.map.get(ref).flatMap(_.get) match {
       case None =>
         log.trace("MISS")
         None
@@ -43,7 +43,7 @@ class HashMapCache extends Cache[String, Any] with Loggable {
             Some(obj)
           else {
             // remove
-            Caching.instance.map.remove(ref)
+            Caching.inner.map.remove(ref)
             None
           }
         else
@@ -51,7 +51,7 @@ class HashMapCache extends Cache[String, Any] with Loggable {
     }
   }
   def apply(namespace: scala.Enumeration#Value, key: String) =
-    get(namespace, key, Caching.instance.ttl) get
+    get(namespace, key, Caching.inner.ttl) get
   def apply(namespace: scala.Enumeration#Value, key: String, period: Long): Any =
     get(namespace.id, key, period) get
   def apply(namespaceID: Int, key: String, period: Long): Any =
@@ -61,7 +61,7 @@ class HashMapCache extends Cache[String, Any] with Loggable {
   def update(namespaceID: Int, key: String, value: Any): Unit = {
     log.trace("update cached value for namespace id " + namespaceID + " and key " + key)
     val ref = namespaceID + " " + key
-    Caching.instance.map(ref) = new SoftReference((System.currentTimeMillis(), value))
+    Caching.inner.map(ref) = new SoftReference((System.currentTimeMillis(), value))
   }
   def update(namespace: scala.Enumeration#Value, updates: Iterable[(String, Any)]): Unit =
     updates.foreach(t => update(namespace, t._1, t._2))
@@ -69,13 +69,13 @@ class HashMapCache extends Cache[String, Any] with Loggable {
     remove(namespace.id, key)
   def remove(namespaceID: Int, key: String): Option[Any] = {
     val ref = namespaceID + " " + key
-    Caching.instance.map.remove(ref).flatMap(ref => ref.get.map(t => t._2))
+    Caching.inner.map.remove(ref).flatMap(ref => ref.get.map(t => t._2))
   }
   def clear(namespace: scala.Enumeration#Value): Unit = {
     val prefix = namespace.id + " "
-    Caching.instance.map.filter(t => t._1.startsWith(prefix)).foreach(t => {
+    Caching.inner.map.filter(t => t._1.startsWith(prefix)).foreach(t => {
       log.debug("remove cache ref " + prefix + t._1)
-      Caching.instance.map.remove(t._1)
+      Caching.inner.map.remove(t._1)
     })
   }
 }

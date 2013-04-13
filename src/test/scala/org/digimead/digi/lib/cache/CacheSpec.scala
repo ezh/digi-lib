@@ -29,7 +29,6 @@ import com.escalatesoft.subcut.inject.NewBindingModule
 class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
   org.apache.log4j.BasicConfigurator.resetConfiguration()
   org.apache.log4j.BasicConfigurator.configure()
-  Caching
 
   describe("A Cache") {
     it("should have proper reinitialization") {

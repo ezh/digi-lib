@@ -27,7 +27,7 @@ import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
 
 object DependencyInjection {
-  private val init = new AtomicBoolean(true)
+  private val initializationRequired = new AtomicBoolean(true)
   private var di: BindingModule = null
   /**
    * map of Class[PersistentInjectable]
@@ -49,10 +49,35 @@ object DependencyInjection {
   }
   def set(di: BindingModule, injectionHook: => Unit = {}): BindingModule = synchronized {
     assert(this.di == null, "dependency injection is already initialized")
+    if (initializationRequired.compareAndSet(true, false)) {
+      this.di = di // prevent for the situation with this.di == null
+      // initialize objects
+      injectables.foreach {
+        case (clazz, ref) =>
+          ref.get match {
+            case Some(pi) =>
+              // initialize PersistentInjectable with assert
+              assert(pi.bindingModule != null)
+            case None =>
+              try {
+                val pi = Class.forName(clazz).getField("MODULE$").get(null).asInstanceOf[DependencyInjection.PersistentInjectable]
+                // initialize PersistentInjectable with if
+                if (pi.bindingModule != null)
+                  injectables(clazz) = new WeakReference(pi)
+              } catch {
+                case e: Throwable =>
+                  System.err.println("DependencyInjection error: " + e)
+                  throw e
+              }
+          }
+      }
+    }
     // We set BindingModule before any Injectable created at the beginning, so injectables map is empty
-    if (!init.compareAndSet(true, false))
-      Option(di).foreach(module => injectables.foreach(clazz =>
-        getPersistentInjectable(clazz._1).map(_.injectionBefore(module))))
+    Option(di).foreach { module =>
+      // invoke injectionBefore
+      injectables.foreach(clazz =>
+        getPersistentInjectable(clazz._1).map(_.injectionBefore(module)))
+    }
     this.di = di
     injectionHook
     Option(di).foreach(module => injectables.foreach(clazz =>
@@ -62,8 +87,14 @@ object DependencyInjection {
   def clear(): BindingModule = synchronized {
     assert(di != null, "dependency injection is not initialized")
     val result = this.di
-    Option(result).foreach(module => injectables.foreach(clazz =>
-      getPersistentInjectable(clazz._1).map(_.injectionOnClear(module))))
+    if (initializationRequired.get) {
+      this.di = null
+      return result
+    } // there is no initialization yet
+    Option(result).foreach { module =>
+      injectables.foreach(clazz =>
+        getPersistentInjectable(clazz._1).map(_.injectionOnClear(module)))
+    }
     this.di = null
     result
   }
