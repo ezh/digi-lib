@@ -30,6 +30,6 @@ package object cache {
     module.bind[Long] identifiedBy "Cache.TTL" toSingle { 1000 * 60 * 10L } // 10 minutes
     module.bind[Caching] toModuleSingle { implicit module => new Caching }
   })
-  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.cache.Caching$")
-  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.aop.Caching$")
+  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.cache.Caching$DI$")
+  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.aop.Caching$DI$")
 }

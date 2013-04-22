@@ -137,32 +137,13 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
   }
 }
 
-object Caching extends DependencyInjection.PersistentInjectable {
-  implicit def bindingModule = DependencyInjection()
-  /** Actor system DI cache */
-  @volatile private var system = inject[ActorSystem]
-  /** Caching implementation DI cache */
-  @volatile private var implementation = inject[Caching]
+object Caching {
   Runtime.getRuntime().addShutdownHook(new Thread {
-    override def run = if (DependencyInjection.get.nonEmpty) Caching.injectOptional[Caching].foreach(_.shutdownHook.foreach(_()))
+    override def run = if (DependencyInjection.get.nonEmpty) DI.implementation.shutdownHook.foreach(_())
   })
 
-  /*
-   * dependency injection
-   */
-  def inner(): Caching = implementation
-  def actorSystem(): ActorSystem = system
-  override def injectionAfter(newModule: BindingModule) {
-    system = inject[ActorSystem]
-    implementation = inject[Caching]
-    inner.init
-  }
-  override def injectionBefore(newModule: BindingModule) {
-    DependencyInjection.assertLazy[ActorSystem](None, newModule)
-  }
-  override def injectionOnClear(oldModule: BindingModule) {
-    inner.deinit()
-  }
+  def inner(): Caching = DI.implementation
+  def actorSystem(): ActorSystem = DI.system
 
   object Message {
     case class Get(namespace: scala.Enumeration#Value, key: String, ttl: Long = Caching.inner.ttl)
@@ -173,5 +154,27 @@ object Caching extends DependencyInjection.PersistentInjectable {
     case class Remove(namespace: scala.Enumeration#Value, key: String)
     case class RemoveByID(namespaceId: Int, key: String)
     case class Clear(namespace: scala.Enumeration#Value)
+  }
+  /**
+   * Dependency injection routines
+   */
+  private object DI extends DependencyInjection.PersistentInjectable {
+    implicit def bindingModule = DependencyInjection()
+    /** Actor system DI cache */
+    @volatile var system = inject[ActorSystem]
+    /** Caching implementation DI cache */
+    @volatile var implementation = inject[Caching]
+
+    override def injectionAfter(newModule: BindingModule) {
+      system = inject[ActorSystem]
+      implementation = inject[Caching]
+      implementation.init
+    }
+    override def injectionBefore(newModule: BindingModule) {
+      DependencyInjection.assertLazy[ActorSystem](None, newModule)
+    }
+    override def injectionOnClear(oldModule: BindingModule) {
+      implementation.deinit()
+    }
   }
 }

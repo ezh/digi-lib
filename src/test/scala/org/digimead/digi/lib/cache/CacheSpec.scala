@@ -26,7 +26,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import com.escalatesoft.subcut.inject.NewBindingModule
 
-class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
+class CacheSpec extends FunSpec with ShouldMatchers {
   org.apache.log4j.BasicConfigurator.resetConfiguration()
   org.apache.log4j.BasicConfigurator.configure()
 
@@ -35,18 +35,17 @@ class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       DependencyInjection.get.foreach { _ => DependencyInjection.clear }
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Caching]('instance)
 
       config.inject[Caching](None) should be theSameInstanceAs (config.inject[Caching](None))
-      val caching1 = AOPCaching invokePrivate privateInstance()
+      val caching1 = AOPCaching.inner
       DependencyInjection.reset()
-      val caching2 = AOPCaching invokePrivate privateInstance()
+      val caching2 = AOPCaching.inner
       caching1 should be theSameInstanceAs (caching2)
       caching1.inner should be theSameInstanceAs (caching2.inner)
       caching1.ttl should equal(caching2.ttl)
 
       DependencyInjection.reset(config ~ (NewBindingModule.newBindingModule(module => {})))
-      val caching3 = AOPCaching invokePrivate privateInstance()
+      val caching3 = AOPCaching.inner
       caching1 should not be theSameInstanceAs(caching3)
       caching2 should not be theSameInstanceAs(caching3)
     }
@@ -54,8 +53,7 @@ class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
       DependencyInjection.get.foreach { _ => DependencyInjection.clear }
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
       DependencyInjection.set(config)
-      val privateInstance = PrivateMethod[Caching]('instance)
-      val instance = AOPCaching invokePrivate privateInstance()
+      val instance = AOPCaching.inner
       instance.inner should not be (null)
       instance.ttl should be(org.digimead.digi.lib.cache.default.inject[Long](Some("Cache.TTL")))
     }
@@ -67,8 +65,7 @@ class CacheSpec extends FunSpec with ShouldMatchers with PrivateMethodTester {
         module.bind[Long] identifiedBy "Cache.TTL" toSingle { 70L }
         module.bind[Caching] identifiedBy "Cache.Instance" toModuleSingle { implicit module => new Caching }
       }) ~ org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default)
-      val privateInstance = PrivateMethod[Caching]('instance)
-      val instance = AOPCaching invokePrivate privateInstance()
+      val instance = AOPCaching.inner
       instance.inner should be(innerCacheImplementation)
       instance.ttl should be(70)
     }

@@ -65,7 +65,7 @@ package object log {
       if (ndc.isEmpty()) ndc else "{" + ndc + "}"
     }
   }) ~ default
-  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.log.Logging$")
+  DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.log.Logging$DI$")
 }
 
 package log {

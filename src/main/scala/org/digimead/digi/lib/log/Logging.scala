@@ -50,10 +50,12 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val isTraceWhereEnabled = injectOptional[Boolean]("Log.TraceWhereEnabled") getOrElse false
   val bufferedThread = inject[Option[Logging.BufferedLogThread]]("Log.BufferedThread")
   val bufferedFlushLimit = injectOptional[Int]("Log.BufferedFlushLimit") getOrElse 1000
-  val bufferedAppender = if (bufferedThread.nonEmpty)
-    inject[HashSet[Appender]]("Log.BufferedAppenders")
-  else
-    HashSet[Appender]()
+  val bufferedAppender = {
+    val appenders = injectOptional[HashSet[Appender]]("Log.BufferedAppenders") getOrElse HashSet[Appender]()
+    if (appenders.nonEmpty)
+      assert(bufferedThread.nonEmpty, "DI Log.BufferedThread is lost in space")
+    appenders
+  }
   val shutdownHook = injectOptional[() => Any]("Log.ShutdownHook")
   val richLogger = new HashMap[String, RichLogger]() with SynchronizedMap[String, RichLogger]
   lazy val commonLogger: RichLogger = {
@@ -131,13 +133,10 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   override def toString() = "default Logging implementation"
 }
 
-object Logging extends DependencyInjection.PersistentInjectable {
+object Logging {
   implicit def Logging2implementation(l: Logging.type): Logging = inner
-  implicit def bindingModule = DependencyInjection()
   private val loggingObjectName = getClass.getName
   private val loggableClassName = classOf[Loggable].getName
-  /** Logging implementation DI cache */
-  @volatile private var implementation = inject[Logging]
   Runtime.getRuntime().addShutdownHook(new Thread {
     override def run = if (DependencyInjection.get.nonEmpty) Logging.injectOptional[Logging].foreach(_.shutdownHook.foreach(_()))
   })
@@ -209,18 +208,7 @@ object Logging extends DependencyInjection.PersistentInjectable {
         logger
     }
   }
-
-  /*
-   * dependency injection
-   */
-  def inner() = implementation
-  override def injectionAfter(newModule: BindingModule) {
-    implementation = inject[Logging]
-    inner.init()
-  }
-  override def injectionOnClear(oldModule: BindingModule) {
-    inner.deinit()
-  }
+  def inner() = DI.implementation
 
   abstract class BufferedLogThread extends Thread("Generic buffered logger for " + Logging.getClass.getName) {
     def init(): Unit
@@ -245,5 +233,21 @@ object Logging extends DependencyInjection.PersistentInjectable {
     val ALL = -1
     val HERE = -2
     val BEFORE = -3
+  }
+  /**
+   * Dependency injection routines
+   */
+  private object DI extends DependencyInjection.PersistentInjectable {
+    implicit def bindingModule = DependencyInjection()
+    /** Logging implementation DI cache */
+    @volatile var implementation = inject[Logging]
+
+    override def injectionAfter(newModule: BindingModule) {
+      implementation = inject[Logging]
+      implementation.init()
+    }
+    override def injectionOnClear(oldModule: BindingModule) {
+      implementation.deinit()
+    }
   }
 }

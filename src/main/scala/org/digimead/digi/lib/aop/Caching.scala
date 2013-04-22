@@ -38,7 +38,7 @@ abstract class Caching extends Loggable {
      * last argument is inappropriate, for example scala compiler add Manifest[_] to tail
      * there may be other bytecode generators
      */
-    val instance = Caching.instance
+    val instance = Caching.DI.implementation
     val key = if (annotation.examination() && args.nonEmpty) {
       args.head match {
         case Caching.BoxedTrue =>
@@ -71,7 +71,7 @@ abstract class Caching extends Loggable {
     }
   }
   def invokeOriginal(invoker: Invoker, key: String, namespaceID: Int): AnyRef = {
-    val instance = Caching.instance
+    val instance = Caching.DI.implementation
     if (instance == null) {
       log.trace("caching is not initialized, invoking original method")
       return invoker.invoke()
@@ -110,26 +110,30 @@ abstract class Caching extends Loggable {
   }
 }
 
-object Caching extends DependencyInjection.PersistentInjectable {
-  implicit def bindingModule = DependencyInjection()
+object Caching {
   final val BoxedTrue = Boolean.box(true)
   final val BoxedFalse = Boolean.box(false)
-  /** The caching instance cache */
-  @volatile private var instance: CCaching = inject[CCaching]
 
-  /*
-   * dependency injection
-   */
-  override def injectionAfter(newModule: BindingModule) {
-    instance = inject[CCaching]
-  }
-  override def injectionBefore(newModule: BindingModule) {
-    DependencyInjection.assertLazy[CCaching](None, newModule)
-  }
+  def inner(): CCaching = DI.implementation
 
   class Basic {
     @cache
     def cached[T](f: () => T) = f()
+  }
+  /**
+   * Dependency injection routines
+   */
+  private object DI extends DependencyInjection.PersistentInjectable {
+    implicit def bindingModule = DependencyInjection()
+    /** The caching instance cache */
+    @volatile var implementation: CCaching = inject[CCaching]
+
+    override def injectionAfter(newModule: BindingModule) {
+      implementation = inject[CCaching]
+    }
+    override def injectionBefore(newModule: BindingModule) {
+      DependencyInjection.assertLazy[CCaching](None, newModule)
+    }
   }
 }
 
