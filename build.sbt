@@ -45,7 +45,7 @@ scalaVersion := "2.10.1"
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature") ++
   (if (true || (System getProperty "java.runtime.version" startsWith "1.7")) Seq() else Seq("-optimize")) // -optimize fails with jdk7
 
-javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
+javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.6", "-target", "1.6")
 
 compileOrder := CompileOrder.JavaThenScala
 
@@ -64,20 +64,6 @@ libraryDependencies ++= {
     "org.slf4j" % "slf4j-log4j12" % "1.7.1" % "test"
   )
 }
-
-// custom local options
-
-resolvers += ("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots")
-
-libraryDependencies ++= {
-  Seq(
-    "com.escalatesoft.subcut" %% "subcut" % "2.0",
-    "com.typesafe.akka" %% "akka-actor" % "2.1.2",
-    "org.aspectj" % "aspectjrt" % "1.7.1",
-    "org.slf4j" % "slf4j-api" % "1.7.1"
-  )
-}
-
 
 parallelExecution in Test := false
 
