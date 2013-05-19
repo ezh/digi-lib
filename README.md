@@ -2,7 +2,6 @@ digi-lib
 ========
 
 [![Build Status](https://travis-ci.org/ezh/digi-lib.png?branch=master)](https://travis-ci.org/ezh/digi-lib)
-[![Coverage Status](https://coveralls.io/repos/ezh/digi-lib/badge.png)](https://coveralls.io/r/ezh/digi-lib)
 
 Central module of all Digi applications and libraries, containing core services for logging and caching
 
