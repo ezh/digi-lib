@@ -49,10 +49,6 @@ javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.6",
 
 compileOrder := CompileOrder.JavaThenScala
 
-publishTo <<= baseDirectory { (base) => Some(Resolver.file("file",  base / "publish/releases" )) }
-
-resolvers += ("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots")
-
 libraryDependencies ++= {
   Seq(
     "com.escalatesoft.subcut" %% "subcut" % "2.0",
