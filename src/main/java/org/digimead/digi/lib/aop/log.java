@@ -16,17 +16,20 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib.aop;
 
-import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Record
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-trait Appender {
-  protected var f: (Array[Record.Message]) => Unit
-  def init() {}
-  def apply(r: Array[Record.Message]) = f(r)
-  def deinit() {}
-  def flush() {}
-  def getF() = synchronized { f }
-  def setF(_f: (Array[Record.Message]) => Unit) = synchronized { f = _f }
+/**
+ * Use this annotation on methods which you want to be weaved by the
+ * {@link Logging}.
+ * 
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface log {
+	boolean result() default true;
 }

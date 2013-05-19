@@ -29,7 +29,9 @@ build.properties
 data/*
 bin/*
 gen/*
-project/*
+project/target/*
+project/project/target/*
+project-dev/*
 target/*
 specs/bin/*
 specs/saved reports/*

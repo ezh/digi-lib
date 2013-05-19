@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,26 @@
 package org.digimead.digi.lib.aop
 
 import scala.Array.canBuildFrom
+import scala.concurrent.Await
 
+import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.cache.{ Caching => CCaching }
-import org.digimead.digi.lib.log.{ Logging => LLogging }
+import org.digimead.digi.lib.log.Loggable
+import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 
-abstract class Caching extends LLogging {
-  protected def execute(invoker: Invoker, annotation: Cacheable, longSignature: String, shortSignature: String, args: Array[AnyRef]): Any = {
+import com.escalatesoft.subcut.inject.BindingModule
+
+import akka.actor.actorRef2Scala
+import akka.pattern.ask
+
+abstract class Caching extends Loggable {
+  protected def execute(invoker: Invoker, annotation: cache, longSignature: String, shortSignature: String, args: Array[AnyRef]): Any = {
     // TODO val logging = log.isTraceEnabled()
     /*
      * last argument is inappropriate, for example scala compiler add Manifest[_] to tail
      * there may be other bytecode generators
      */
+    val instance = Caching.DI.implementation
     val key = if (annotation.examination() && args.nonEmpty) {
       args.head match {
         case Caching.BoxedTrue =>
@@ -48,7 +57,11 @@ abstract class Caching extends LLogging {
     } else
       longSignature.hashCode() + " " + args.map(_.hashCode()).mkString(" ")
     log.trace(shortSignature + " with namespace id " + annotation.namespace)
-    CCaching.actor !? CCaching.Message.GetByID(annotation.namespace(), key, annotation.period()) match {
+    if (instance == null || instance.actor.isTerminated)
+      return invokeOriginal(invoker, key, annotation.namespace())
+    implicit val timeout = instance.requestTimeout
+    val future = instance.actor ? CCaching.Message.GetByID(annotation.namespace(), key, annotation.period())
+    Await.result(future, timeout.duration) match {
       case r @ Some(retVal) =>
         log.trace("HIT, key " + key + " found, returning cached value")
         return r
@@ -57,39 +70,71 @@ abstract class Caching extends LLogging {
         invokeOriginal(invoker, key, annotation.namespace())
     }
   }
-  def invokeOriginal(invoker: Invoker, key: String, namespaceID: Int) =
+  def invokeOriginal(invoker: Invoker, key: String, namespaceID: Int): AnyRef = {
+    val instance = Caching.DI.implementation
+    if (instance == null) {
+      log.trace("caching is not initialized, invoking original method")
+      return invoker.invoke()
+    }
+    if (instance.actor.isTerminated) {
+      log.trace("actor " + instance.actor + " is terminated, invoking original method")
+      return invoker.invoke()
+    }
     // all cases except "Option" and "Traversable" must throw scala.MatchError
     // so developer notified about design bug
     invoker.invoke() match {
       case r @ Traversable =>
         // process collection
-        CCaching.actor ! CCaching.Message.UpdateByID(namespaceID, key, r)
+        instance.actor ! CCaching.Message.UpdateByID(namespaceID, key, r)
         log.trace("key " + key + " updated")
         r
       case Nil =>
         // process Nil
-        CCaching.actor ! CCaching.Message.RemoveByID(namespaceID, key)
+        instance.actor ! CCaching.Message.RemoveByID(namespaceID, key)
         log.trace("key " + key + "  removed, original method return Nil value")
         Nil
       case r @ Some(retVal) =>
         // process option
-        CCaching.actor ! CCaching.Message.UpdateByID(namespaceID, key, retVal)
+        instance.actor ! CCaching.Message.UpdateByID(namespaceID, key, retVal)
         log.trace("key " + key + " updated")
         r
       case None =>
         // process None
-        CCaching.actor ! CCaching.Message.RemoveByID(namespaceID, key)
+        instance.actor ! CCaching.Message.RemoveByID(namespaceID, key)
         log.trace("key " + key + " removed, original return None value")
         None
     }
+  }
   trait Invoker {
     def invoke(): AnyRef
   }
 }
 
 object Caching {
-  private final val BoxedTrue = Boolean.box(true)
-  private final val BoxedFalse = Boolean.box(false)
+  final val BoxedTrue = Boolean.box(true)
+  final val BoxedFalse = Boolean.box(false)
+
+  def inner(): CCaching = DI.implementation
+
+  class Basic {
+    @cache
+    def cached[T](f: () => T) = f()
+  }
+  /**
+   * Dependency injection routines
+   */
+  private object DI extends DependencyInjection.PersistentInjectable {
+    implicit def bindingModule = DependencyInjection()
+    /** The caching instance cache */
+    @volatile var implementation: CCaching = inject[CCaching]
+
+    override def injectionAfter(newModule: BindingModule) {
+      implementation = inject[CCaching]
+    }
+    override def injectionBefore(newModule: BindingModule) {
+      DependencyInjection.assertLazy[CCaching](None, newModule)
+    }
+  }
 }
 
 /*

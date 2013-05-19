@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,13 @@ package org.digimead.digi.lib.log.appender
 import org.digimead.digi.lib.log.Record
 
 object Console extends Appender {
-  protected var f = (records: Array[Record]) => synchronized {
+  protected var f = (records: Array[Record.Message]) => synchronized {
     records.foreach(r => {
       System.err.println(r.toString())
-      r.throwable.foreach(t => System.err.print(try {
-        "\n" + t.getStackTraceString
-      } catch {
-        case e =>
-          "stack trace \"" + t.getMessage + "\" unaviable "
-      }))
+      r.throwable.foreach { t =>
+        System.err.print("\n")
+        t.printStackTrace(System.err)
+      }
     })
     System.err.flush()
   }

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+// Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,73 +13,76 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import com.jsuereth.sbtsite.SiteKeys
+// DEVELOPMENT CONFIGURATION
 
-com.typesafe.sbtaspectj.AspectjPlugin.settings
+import sbt.osgi.manager._
 
-sbt.source.align.SSA.ssaSettings
+sbt.scct.ScctPlugin.instrumentSettings
 
-site.settings
-
-ghpages.settings
+activateOSGiManager
 
 name := "Digi-Lib"
 
-description := "Base library for digi components"
+description := "Base library for Digi components"
 
 organization := "org.digimead"
 
-version := "0.2"
+version <<= (baseDirectory) { (b) => scala.io.Source.fromFile(b / "version").mkString.trim }
 
-crossScalaVersions := Seq("2.8.2", "2.9.0", "2.9.0-1", "2.9.1", "2.9.2")
+inConfig(OSGiConf)({
+  import OSGiKey._
+  Seq[Project.Setting[_]](
+    osgiBndBundleSymbolicName := "org.digimead.digi.lib",
+    osgiBndImportPackage := List("!org.aspectj.lang", "*"),
+    osgiBndExportPackage := List("org.digimead.*")
+  )
+})
 
-scalaVersion := "2.9.2"
+crossScalaVersions := Seq("2.10.1")
 
-scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit") ++
+scalaVersion := "2.10.1"
+
+scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature") ++
   (if (true || (System getProperty "java.runtime.version" startsWith "1.7")) Seq() else Seq("-optimize")) // -optimize fails with jdk7
 
 javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
-git.remoteRepo := "git@github.com:ezh/digi-lib.git"
+compileOrder := CompileOrder.JavaThenScala
 
-site.addMappingsToSiteDir(mappings in packageDoc in Compile, "api")
+publishTo <<= baseDirectory { (base) => Some(Resolver.file("file",  base / "publish/releases" )) }
 
-SiteKeys.siteMappings <<=
-  (SiteKeys.siteMappings, PamfletKeys.write, PamfletKeys.output, baseDirectory) map {
-    (mappings, _, pamfletDir, baseDirectory) =>
-      val publishDir = baseDirectory / "publish"
-      val releasesDir = baseDirectory / "publish/releases"
-      mappings ++ (pamfletDir ** "*.*" x relativeTo(pamfletDir)) ++ (releasesDir ** "*.*" x relativeTo(publishDir))
-  }
-
-PamfletKeys.docs <<= baseDirectory / "publish/docs"
-
-TaskKey[Unit]("publish-github") <<= (streams, com.jsuereth.ghpages.GhPages.ghpages.pushSite) map { (s, push) =>
-  s.log.info("publishing project to github")
-}
-
-TaskKey[Unit]("publish-github") <<= TaskKey[Unit]("publish-github").dependsOn(PamfletKeys.write)
-
-publishTo  <<= baseDirectory  { (base) => Some(Resolver.file("file",  base / "publish/releases" )) }
+resolvers += ("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots")
 
 libraryDependencies ++= {
   Seq(
+    "com.escalatesoft.subcut" %% "subcut" % "2.0",
+    "com.typesafe.akka" %% "akka-actor" % "2.1.4",
+    "org.aspectj" % "aspectjrt" % "1.7.2",
+    "org.slf4j" % "slf4j-api" % "1.7.5",
+    "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+      excludeAll(ExclusionRule("org.scala-lang", "scala-reflect"), ExclusionRule("org.scala-lang", "scala-actors")),
+    "org.slf4j" % "slf4j-log4j12" % "1.7.1" % "test"
+  )
+}
+
+// custom local options
+
+resolvers += ("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots")
+
+libraryDependencies ++= {
+  Seq(
+    "com.escalatesoft.subcut" %% "subcut" % "2.0",
+    "com.typesafe.akka" %% "akka-actor" % "2.1.2",
+    "org.aspectj" % "aspectjrt" % "1.7.1",
     "org.slf4j" % "slf4j-api" % "1.7.1"
   )
 }
 
-if (sys.env.contains("LOCAL_BUILD")) {
-  Seq[Project.Setting[_]](
-    unmanagedResourceDirectories in Compile <+= baseDirectory { _ / "src" / "main" / "scala" },
-    libraryDependencies ++= {
-      Seq(
-        "org.scalatest" %% "scalatest" % "1.8" % "test",
-        "org.slf4j" % "slf4j-log4j12" % "1.7.1" % "test"
-      )
-    }
-  )
-} else {
-  Seq[Project.Setting[_]]()
-}
+
+parallelExecution in Test := false
+
+parallelExecution in sbt.scct.ScctPlugin.ScctTest := false
+
+//sourceDirectory in Test <<= baseDirectory / "Testing Infrastructure Is Absent"
 
 //logLevel := Level.Debug

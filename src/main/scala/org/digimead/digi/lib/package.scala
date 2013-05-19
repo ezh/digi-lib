@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- * 
+ *
  * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,20 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+import com.escalatesoft.subcut.inject.NewBindingModule
+import akka.actor.ActorSystem
 
-import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Record
+package org.digimead.digi {
+  package object lib {
+    lazy val default = log.default ~ cache.default ~ new NewBindingModule(module => {
+      module.bind[ActorSystem] toSingle { ActorSystem("DigiSystem") }
+    })
+    lazy val defaultWithDC = log.defaultWithDC ~ cache.default
+  }
+}
 
-trait Appender {
-  protected var f: (Array[Record.Message]) => Unit
-  def init() {}
-  def apply(r: Array[Record.Message]) = f(r)
-  def deinit() {}
-  def flush() {}
-  def getF() = synchronized { f }
-  def setF(_f: (Array[Record.Message]) => Unit) = synchronized { f = _f }
+package com.escalatesoft.subcut.inject {
+  object getBindingKey {
+    def apply[T](m: Manifest[T], name: Option[String]) = BindingKey(m, name)
+  }
 }

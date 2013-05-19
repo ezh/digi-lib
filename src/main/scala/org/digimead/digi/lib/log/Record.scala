@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,25 @@ package org.digimead.digi.lib.log
 import java.text.SimpleDateFormat
 import java.util.Date
 
-class Record(
-  val date: Date,
-  val tid: Long,
-  val level: Record.Level,
-  val tag: String,
-  val message: String,
-  val throwable: Option[Throwable],
-  val pid: Int) {
-  override def toString = "%s P%05d T%05d %s %-24s %s".format(Record.dateFormat.format(date), pid, tid, level.toString.charAt(0), tag + ":", message)
+import com.escalatesoft.subcut.inject.BindingModule
+import com.escalatesoft.subcut.inject.Injectable
+
+class Record(implicit val bindingModule: BindingModule) extends Injectable {
+  val builder = inject[Record.MessageBuilder]("Log.Record.Builder")
+  val pid = inject[Int]("Log.Record.PID")
+  val dateFormat = inject[SimpleDateFormat]("Log.Record.DateFormat")
 }
 
 object Record {
-  private var recordBuilder: (Date, Long, Level, String, String, Option[Throwable], Int) => Record = null
-  private var pid = -1
-  private var dateFormat: SimpleDateFormat = null
-
-  RecordInitializationArgument.foreach(init)
-
-  def apply(date: Date, tid: Long, level: Level, tag: String, message: String) =
-    recordBuilder(date, tid, level, tag, message, None, pid)
-  def apply(date: Date, tid: Long, level: Level, tag: String, message: String, throwable: Option[Throwable]) =
-    recordBuilder(date, tid, level, tag, message, throwable, pid)
-  def apply(date: Date, tid: Long, level: Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =
-    recordBuilder(date, tid, level, tag, message, throwable, pid)
-  def init(arg: Init) = synchronized {
-    recordBuilder = arg.recordBuilder
-    pid = arg.pid
-    dateFormat = arg.dateFormat
+  type MessageBuilder = (Date, Long, Level, String, String, Option[Throwable], Int) => Message
+  trait Message {
+    val date: Date
+    val tid: Long
+    val level: Record.Level
+    val tag: String
+    val message: String
+    val throwable: Option[Throwable]
+    val pid: Int
   }
   sealed trait Level
   object Level {
@@ -57,31 +48,5 @@ object Record {
     case object Info extends Level
     case object Warn extends Level
     case object Error extends Level
-  }
-  trait Init {
-    val recordBuilder: (Date, Long, Level, String, String, Option[Throwable], Int) => Record
-    val pid: Int
-    val dateFormat: SimpleDateFormat
-  }
-  class DefaultInit extends Init {
-    val recordBuilder = (date: Date, tid: Long, level: Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
-      new Record(date, tid, level, tag, message, throwable, pid)
-    val pid = -1
-    val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
-  }
-  class InitWithDiagnosticContext extends Init {
-    val recordBuilder = (date: Date, tid: Long, level: Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
-      new Record(date, tid, level, tag, message + " " + getMDC + getNDC, throwable, pid)
-    val pid = -1
-    val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
-
-    def getMDC() = {
-      val mdc = MDC.getSeq.map(t => t._1 + "=" + t._2).mkString(", ")
-      if (mdc.isEmpty()) mdc else "{" + mdc + "}"
-    }
-    def getNDC() = {
-      val ndc = NDC.getSeq.mkString(", ")
-      if (ndc.isEmpty()) ndc else "{" + ndc + "}"
-    }
   }
 }

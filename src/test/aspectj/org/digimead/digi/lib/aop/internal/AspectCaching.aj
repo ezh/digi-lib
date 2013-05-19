@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- * 
+ *
  * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,22 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib.aop.internal;
 
-import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.aop.cache;
 
-trait Appender {
-  protected var f: (Array[Record.Message]) => Unit
-  def init() {}
-  def apply(r: Array[Record.Message]) = f(r)
-  def deinit() {}
-  def flush() {}
-  def getF() = synchronized { f }
-  def setF(_f: (Array[Record.Message]) => Unit) = synchronized { f = _f }
+privileged public final aspect AspectCaching extends
+		org.digimead.digi.lib.aop.Caching {
+	public pointcut cachedAccessPoint(cache c):
+		execution(@cache * *(..)) && @annotation(c);
+
+	Object around(final cache c): cachedAccessPoint(c) {
+		Invoker aspectJInvoker = new Invoker() {
+			public Object invoke() {
+				return proceed(c);
+			}
+		};
+		return execute(aspectJInvoker, c, thisJoinPointStaticPart.toLongString(),
+				thisJoinPointStaticPart.toShortString(), thisJoinPoint.getArgs());
+	}
 }

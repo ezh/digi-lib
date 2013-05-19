@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  * 
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface Cacheable {
+public @interface cache {
 	// namespace id - where all cached date saved
 	int namespace() default 0;
 	// time period when data is actual

@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
- * 
- * Copyright (c) 2012 Alexey Aksenov ezh@ezh.msk.ru
+ *
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,20 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.aop;
+package org.digimead.digi.lib.log
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.digimead.digi.lib.log.logger.RichLogger
+import org.digimead.digi.lib.aop.log
 
-/**
- * Use this annotation on methods which you want to be weaved by the
- * {@link Logging}.
- * 
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Loggable {
-	boolean result() default true;
+trait Loggable {
+  /** always call Logging.getRich, even after deserialization */
+  @transient
+  implicit lazy val log: RichLogger = try {
+    Logging.getLogger(this.getClass())
+  } catch {
+    // allow to catch real exception cause
+    case e: NoClassDefFoundError =>
+      System.err.println(e)
+      null
+  }
 }
