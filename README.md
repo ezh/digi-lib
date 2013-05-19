@@ -26,9 +26,8 @@ Download jar files directly from the [GitHub](https://github.com/ezh/digi-lib/tr
 
 ## Target platform
 
-* Scala 2.8.2, 2.9.0, 2.9.0-1, 2.9.1, 2.9.2 (request for more if needed)
-* JVM 1.5+
-* The only 3rd-party library dependency is [SLF4J](http://www.slf4j.org/)
+* Scala 2.10.1 (request for more if needed)
+* JVM 1.6+
 
 ## Participate in the development ##
 
