@@ -24,12 +24,10 @@ object Console extends Appender {
   protected var f = (records: Array[Record.Message]) => synchronized {
     records.foreach(r => {
       System.err.println(r.toString())
-      r.throwable.foreach(t => System.err.print(try {
-        "\n" + t.getStackTraceString
-      } catch {
-        case e: Throwable =>
-          "stack trace \"" + t.getMessage + "\" unaviable "
-      }))
+      r.throwable.foreach { t =>
+        System.err.print("\n")
+        t.printStackTrace(System.err)
+      }
     })
     System.err.flush()
   }
