@@ -42,7 +42,6 @@ lift/*
 junit*
 /log_errors.log
 /log_info.log
-*.sbt
 _*
 
 # use glob syntax.
