@@ -1,6 +1,9 @@
 digi-lib
 ========
 
+[![Build Status](https://travis-ci.org/ezh/digi-lib.png?branch=master)](https://travis-ci.org/ezh/digi-lib)
+[![Coverage Status](https://coveralls.io/repos/ezh/digi-lib/badge.png)](https://coveralls.io/r/ezh/digi-lib)
+
 Central module of all Digi applications and libraries, containing core services for logging and caching
 
 If you want improve it, please send request to _ezh_ at _ezh.msk.ru_. You will be given the permissions to the repository. Please, feel free to add yourself to authors.
@@ -8,9 +11,9 @@ If you want improve it, please send request to _ezh_ at _ezh.msk.ru_. You will b
 DOCUMENTATION
 -------------
 
-### [DOCUMENTATION](http://ezh.github.com/digi-lib/)
-### [WIKI](http://github.com/ezh/digi-lib/wiki)
-### [API (latest version)](http://ezh.github.com/digi-lib/api/)
+* [Documeantation](http://ezh.github.com/digi-lib/)
+* [Wiki](http://github.com/ezh/digi-lib/wiki)
+* [API (latest version)](http://ezh.github.com/digi-lib/api/)
 
 ### Setup
 
