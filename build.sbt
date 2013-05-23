@@ -25,7 +25,13 @@ name := "Digi-Lib"
 
 description := "Base library for Digi components"
 
+licenses := Seq("The Apache Software License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+
 organization := "org.digimead"
+
+organizationHomepage := Some(url("http://digimead.org"))
+
+homepage := Some(url("https://github.com/ezh/digi-lib"))
 
 version <<= (baseDirectory) { (b) => scala.io.Source.fromFile(b / "version").mkString.trim }
 
@@ -45,7 +51,10 @@ scalaVersion := "2.10.1"
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature") ++
   (if (true || (System getProperty "java.runtime.version" startsWith "1.7")) Seq() else Seq("-optimize")) // -optimize fails with jdk7
 
+// http://vanillajava.blogspot.ru/2012/02/using-java-7-to-target-much-older-jvms.html
 javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.6", "-target", "1.6")
+
+if (sys.env.contains("XBOOTCLASSPATH")) Seq(javacOptions += "-Xbootclasspath:" + sys.env("XBOOTCLASSPATH")) else Seq()
 
 compileOrder := CompileOrder.JavaThenScala
 
