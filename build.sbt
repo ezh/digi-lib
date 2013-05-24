@@ -19,8 +19,6 @@ import sbt.osgi.manager._
 
 sbt.scct.ScctPlugin.instrumentSettings
 
-activateOSGiManager
-
 name := "Digi-Lib"
 
 description := "Base library for Digi components"
@@ -39,8 +37,10 @@ inConfig(OSGiConf)({
   import OSGiKey._
   Seq[Project.Setting[_]](
     osgiBndBundleSymbolicName := "org.digimead.digi.lib",
+    osgiBndBundleCopyright := "Copyright © 2011-2013 Alexey B. Aksenov/Ezh. All rights reserved.",
+    osgiBndExportPackage := List("org.digimead.*"),
     osgiBndImportPackage := List("!org.aspectj.lang", "*"),
-    osgiBndExportPackage := List("org.digimead.*")
+    osgiBndBundleLicense := "http://www.apache.org/licenses/LICENSE-2.0.txt;description=The Apache Software License, Version 2.0"
   )
 })
 
@@ -55,8 +55,6 @@ scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xche
 javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.6", "-target", "1.6")
 
 if (sys.env.contains("XBOOTCLASSPATH")) Seq(javacOptions += "-Xbootclasspath:" + sys.env("XBOOTCLASSPATH")) else Seq()
-
-compileOrder := CompileOrder.JavaThenScala
 
 libraryDependencies ++= {
   Seq(
