@@ -17,7 +17,7 @@
 
 import sbt.osgi.manager._
 
-sbt.scct.ScctPlugin.instrumentSettings
+activateOSGiManager ++ sbt.scct.ScctPlugin.instrumentSettings
 
 name := "Digi-Lib"
 
@@ -56,8 +56,7 @@ javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.6",
 
 if (sys.env.contains("XBOOTCLASSPATH")) Seq(javacOptions += "-Xbootclasspath:" + sys.env("XBOOTCLASSPATH")) else Seq()
 
-libraryDependencies ++= {
-  Seq(
+libraryDependencies ++= Seq(
     "com.escalatesoft.subcut" %% "subcut" % "2.0",
     "com.typesafe.akka" %% "akka-actor" % "2.1.4",
     "org.aspectj" % "aspectjrt" % "1.7.2",
@@ -66,7 +65,6 @@ libraryDependencies ++= {
       excludeAll(ExclusionRule("org.scala-lang", "scala-reflect"), ExclusionRule("org.scala-lang", "scala-actors")),
     "org.slf4j" % "slf4j-log4j12" % "1.7.1" % "test"
   )
-}
 
 parallelExecution in Test := false
 
