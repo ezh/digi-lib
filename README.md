@@ -1,8 +1,6 @@
 digi-lib [![Build Status](https://travis-ci.org/ezh/digi-lib.png?branch=master)](https://travis-ci.org/ezh/digi-lib)
 ========
 
-[![Build Status](https://travis-ci.org/ezh/digi-lib.png?branch=master)](https://travis-ci.org/ezh/digi-lib)
-
 Central module of all Digi applications and libraries, containing core services for logging and caching
 
 If you want improve it, please send request to _ezh_ at _ezh.msk.ru_. You will be given the permissions to the repository. Please, feel free to add yourself to authors.
