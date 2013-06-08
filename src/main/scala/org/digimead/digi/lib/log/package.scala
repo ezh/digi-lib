@@ -27,7 +27,7 @@ import org.digimead.digi.lib.log.Logging
 import org.digimead.digi.lib.log.MDC
 import org.digimead.digi.lib.log.NDC
 import org.digimead.digi.lib.log.Record
-import org.digimead.digi.lib.log.logger.RichLogger
+import org.digimead.digi.lib.log.api.RichLogger
 import org.slf4j.LoggerFactory
 
 import com.escalatesoft.subcut.inject.BindingModule
@@ -45,8 +45,8 @@ package object log {
     }
     module.bind[Record] toModuleSingle { implicit module => new Record }
     module.bind[(String) => RichLogger] identifiedBy "Log.Builder" toProvider ((module: BindingModule) => {
-      def isTraceWhereEnabled = module.injectOptional[Boolean](Some("Log.TraceWhereEnabled")) getOrElse false
-      (name: String) => new RichLogger(LoggerFactory.getLogger(name), isTraceWhereEnabled)
+      def isWhereEnabled = module.injectOptional[Boolean](Some("Log.TraceWhereEnabled")) getOrElse false
+      (name: String) => new org.digimead.digi.lib.log.logger.RichLogger(LoggerFactory.getLogger(name), isWhereEnabled)
     })
     module.bind[Logging] toModuleSingle { implicit module => new Logging }
   })
@@ -68,15 +68,3 @@ package object log {
   DependencyInjection.setPersistentInjectable("org.digimead.digi.lib.log.Logging$DI$")
 }
 
-package log {
-  class Message(val date: Date,
-    val tid: Long,
-    val level: Record.Level,
-    val tag: String,
-    val message: String,
-    val throwable: Option[Throwable],
-    val pid: Int) extends Record.Message {
-    override def toString = "%s P%05d T%05d %s %-24s %s".format(dateFormat.format(date),
-      pid, tid, level.toString.charAt(0), tag + ":", message)
-  }
-}

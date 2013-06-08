@@ -20,54 +20,66 @@ package org.digimead.digi.lib.cache
 
 import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.aop.{ Caching => AOPCaching }
-import org.scalatest.FunSpec
-import org.scalatest.PrivateMethodTester
+import org.digimead.lib.test.LoggingHelper
+import org.scalatest.WordSpec
 import org.scalatest.matchers.ShouldMatchers
 
 import com.escalatesoft.subcut.inject.NewBindingModule
 
-class CacheSpec extends FunSpec with ShouldMatchers {
-  org.apache.log4j.BasicConfigurator.resetConfiguration()
-  org.apache.log4j.BasicConfigurator.configure()
-
-  describe("A Cache") {
-    it("should have proper reinitialization") {
-      DependencyInjection.get.foreach { _ => DependencyInjection.clear }
+class CacheSpec000 extends CacheSpec.Base {
+  "A Cache Singleton" should {
+    "be persistent" in {
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
-      DependencyInjection.set(config)
+      DependencyInjection(config)
 
       config.inject[Caching](None) should be theSameInstanceAs (config.inject[Caching](None))
       val caching1 = AOPCaching.inner
-      DependencyInjection.reset()
       val caching2 = AOPCaching.inner
       caching1 should be theSameInstanceAs (caching2)
       caching1.inner should be theSameInstanceAs (caching2.inner)
       caching1.ttl should equal(caching2.ttl)
 
-      DependencyInjection.reset(config ~ (NewBindingModule.newBindingModule(module => {})))
+      DependencyInjection(config ~ (NewBindingModule.newBindingModule(module => {})), false)
       val caching3 = AOPCaching.inner
-      caching1 should not be theSameInstanceAs(caching3)
-      caching2 should not be theSameInstanceAs(caching3)
+      caching1 should be theSameInstanceAs (caching3)
+      caching2 should be theSameInstanceAs (caching3)
     }
-    it("should create singeton with default parameters") {
-      DependencyInjection.get.foreach { _ => DependencyInjection.clear }
+  }
+}
+
+class CacheSpec001 extends CacheSpec.Base {
+  "A Cache Singleton" should {
+    "create instance with default parameters" in {
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
-      DependencyInjection.set(config)
+      DependencyInjection(config)
       val instance = AOPCaching.inner
       instance.inner should not be (null)
       instance.ttl should be(org.digimead.digi.lib.cache.default.inject[Long](Some("Cache.TTL")))
     }
-    it("should create singeton with apropriate parameters") {
-      DependencyInjection.get.foreach { _ => DependencyInjection.clear }
+  }
+}
+
+class CacheSpec002 extends CacheSpec.Base {
+  "A Cache Singleton" should {
+    "create instance with apropriate parameters" in {
       val innerCacheImplementation = new NilCache[String, Any]
-      DependencyInjection.set(new NewBindingModule(module => {
+      DependencyInjection(new NewBindingModule(module => {
         module.bind[Cache[String, Any]] identifiedBy "Cache.Engine" toSingle { innerCacheImplementation }
         module.bind[Long] identifiedBy "Cache.TTL" toSingle { 70L }
         module.bind[Caching] identifiedBy "Cache.Instance" toModuleSingle { implicit module => new Caching }
       }) ~ org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default)
       val instance = AOPCaching.inner
-      instance.inner should be(innerCacheImplementation)
       instance.ttl should be(70)
+      instance.inner should be(innerCacheImplementation)
     }
+  }
+}
+
+object CacheSpec {
+  trait Base extends WordSpec with LoggingHelper with ShouldMatchers {
+    after { adjustLoggingAfter }
+    before { adjustLoggingBefore }
+
+    override def beforeAll(configMap: Map[String, Any]) { adjustLoggingBeforeAll(configMap) }
   }
 }

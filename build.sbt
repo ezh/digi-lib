@@ -15,9 +15,10 @@
 
 // DEVELOPMENT CONFIGURATION
 
+import sbt.aspectj.nested._
 import sbt.osgi.manager._
 
-activateOSGiManager ++ sbt.scct.ScctPlugin.instrumentSettings
+AspectJNested ++ OSGiManager ++ sbt.scct.ScctPlugin.instrumentSettings
 
 name := "Digi-Lib"
 
@@ -36,10 +37,11 @@ version <<= (baseDirectory) { (b) => scala.io.Source.fromFile(b / "version").mkS
 inConfig(OSGiConf)({
   import OSGiKey._
   Seq[Project.Setting[_]](
+    osgiBndBundleActivator := "org.digimead.digi.lib.OSGi",
     osgiBndBundleSymbolicName := "org.digimead.digi.lib",
     osgiBndBundleCopyright := "Copyright © 2011-2013 Alexey B. Aksenov/Ezh. All rights reserved.",
     osgiBndExportPackage := List("org.digimead.*"),
-    osgiBndImportPackage := List("!org.aspectj.lang", "*"),
+    osgiBndImportPackage := List("!org.aspectj.*", "*"),
     osgiBndBundleLicense := "http://www.apache.org/licenses/LICENSE-2.0.txt;description=The Apache Software License, Version 2.0"
   )
 })
@@ -56,20 +58,55 @@ javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.6",
 
 if (sys.env.contains("XBOOTCLASSPATH")) Seq(javacOptions += "-Xbootclasspath:" + sys.env("XBOOTCLASSPATH")) else Seq()
 
+//
+// AspectJ
+//
+
+aspectjSource in AJConf <<= sourceDirectory(_ / "test" / "aspectj")
+
+aspectjInputs in AJConf <<= classDirectory in Test map {dir => Seq(dir)}
+
+aspectjFilter in AJConf := { (input, aspects) =>
+  input.name match {
+    case "test-classes" => aspects filter (_.toString.contains("/aspectj/org/digimead/digi/lib/aop/internal/"))
+    case other => Seq.empty
+  }
+}
+
+products in Test <<= (products in Test, aspectjWeaveArg in AJConf, aspectjGenericArg in AJConf) map { (_, a, b) => AspectJ.weave(a)(b) }
+
+//
+// Custom local options
+//
+
+resolvers += "digimead-maven" at "http://storage.googleapis.com/maven.repository.digimead.org/"
+
 libraryDependencies ++= Seq(
     "com.escalatesoft.subcut" %% "subcut" % "2.0",
     "com.typesafe.akka" %% "akka-actor" % "2.1.4",
+    "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
     "org.aspectj" % "aspectjrt" % "1.7.2",
-    "org.slf4j" % "slf4j-api" % "1.7.5",
-    "org.scalatest" %% "scalatest" % "1.9.1" % "test"
-      excludeAll(ExclusionRule("org.scala-lang", "scala-reflect"), ExclusionRule("org.scala-lang", "scala-actors")),
-    "org.slf4j" % "slf4j-log4j12" % "1.7.1" % "test"
+    "org.digimead" %% "digi-lib-test" % "0.2.2.1-SNAPSHOT" % "test",
+    "org.osgi" % "org.osgi.core" % "5.0.0",
+    "org.osgi" % "org.osgi.compendium" % "4.3.1",
+    "org.slf4j" % "slf4j-api" % "1.7.5"
   )
+
+//
+// Testing
+//
 
 parallelExecution in Test := false
 
 parallelExecution in sbt.scct.ScctPlugin.ScctTest := false
 
-//sourceDirectory in Test <<= baseDirectory / "Testing Infrastructure Is Absent"
+testGrouping <<= (definedTests in Test) map { tests =>
+  tests map { test =>
+    new Tests.Group(
+      name = test.name,
+      tests = Seq(test),
+      runPolicy = Tests.SubProcess(javaOptions = Seq.empty[String]))
+  }
+}
 
 //logLevel := Level.Debug

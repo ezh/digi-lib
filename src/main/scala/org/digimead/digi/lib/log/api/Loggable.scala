@@ -16,20 +16,28 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log
+package org.digimead.digi.lib.log.api
 
-import org.digimead.digi.lib.log.logger.RichLogger
-import org.digimead.digi.lib.aop.log
+import scala.annotation.implicitNotFound
+
+import org.digimead.digi.lib.log.Logging
 
 trait Loggable {
-  /** always call Logging.getRich, even after deserialization */
   @transient
   implicit lazy val log: RichLogger = try {
-    Logging.getLogger(this.getClass())
+    Logging.getLogger(getClass())
   } catch {
     // allow to catch real exception cause
     case e: NoClassDefFoundError =>
       System.err.println(e)
-      null
+      throw new RuntimeException("Unable to get logger for " + getClass.getName, e)
+  }
+}
+
+object Loggable {
+  object Where {
+    val ALL = -1
+    val HERE = -2
+    val BEFORE = -3
   }
 }

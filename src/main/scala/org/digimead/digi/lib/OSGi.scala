@@ -1,0 +1,90 @@
+/**
+ * Digi-Lib - base library for Digi components
+ *
+ * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.digimead.digi.lib
+
+import org.digimead.digi.lib.cache.Caching
+import org.digimead.digi.lib.log.Logging
+import org.digimead.digi.lib.log.api.Loggable
+import org.osgi.framework.BundleActivator
+import org.osgi.framework.BundleContext
+import org.osgi.util.tracker.ServiceTracker
+import org.osgi.service.log.LogService
+import org.osgi.service.log.LogEntry
+import org.osgi.service.log.LogListener
+import org.osgi.service.log.LogReaderService
+import org.osgi.util.tracker.ServiceTrackerCustomizer
+import org.osgi.framework.ServiceReference
+
+class OSGi extends BundleActivator with LogListener with ServiceTrackerCustomizer[LogReaderService, LogReaderService] with Loggable {
+  @volatile protected var context: Option[BundleContext] = None
+  @volatile protected var logReaderTracker: Option[ServiceTracker[LogReaderService, LogReaderService]] = None
+
+  /** Start bundle. */
+  def start(context: BundleContext) {
+    log.debug("Start Digi-Lib.")
+    this.context = Some(context)
+    val logReaderTracker = new ServiceTracker[LogReaderService, LogReaderService](context, classOf[LogReaderService].getName(), this)
+    logReaderTracker.open()
+    this.logReaderTracker = Some(logReaderTracker)
+    Logging.init()
+    Caching.init()
+  }
+  /** Stop bundle. */
+  def stop(context: BundleContext) {
+    log.debug("Stop Digi-Lib.")
+    Caching.shutdownHook.foreach(_())
+    Caching.deinit()
+    Logging.shutdownHook.foreach(_())
+    Logging.deinit()
+    this.logReaderTracker.foreach(_.close())
+    this.logReaderTracker = None
+    this.context = None
+  }
+  /** Transfer logEntry to log. */
+  def logged(logEntry: LogEntry) {
+    val bundle = logEntry.getBundle()
+    val symbolicName = bundle.getSymbolicName().replaceAll("-", "_")
+    val log = Logging.getLogger("osgi.logging." + symbolicName)
+    val message = Option(logEntry.getServiceReference()) match {
+      case Some(serviceReference) => logEntry.getMessage() + serviceReference.toString()
+      case None => logEntry.getMessage()
+    }
+    logEntry.getLevel() match {
+      case LogService.LOG_DEBUG => log.debug(message, logEntry.getException())
+      case LogService.LOG_INFO => log.info(message, logEntry.getException())
+      case LogService.LOG_WARNING => log.warn(message, logEntry.getException())
+      case LogService.LOG_ERROR => log.error(message, logEntry.getException())
+    }
+  }
+  /** Subscribe to new LogReaderService */
+  def addingService(serviceReference: ServiceReference[LogReaderService]): LogReaderService = {
+    context.map { context =>
+      val logReaderService = context.getService(serviceReference)
+      log.debug("Subscribe log listener to " + logReaderService.getClass.getName)
+      logReaderService.addLogListener(this)
+      logReaderService
+    } getOrElse null
+  }
+  def modifiedService(serviceReference: ServiceReference[LogReaderService], logReaderService: LogReaderService) {}
+  /** Unsubscribe from disposed LogReaderService */
+  def removedService(serviceReference: ServiceReference[LogReaderService], logReaderService: LogReaderService) {
+    log.debug("Unsubscribe log listener from " + logReaderService.getClass.getName)
+    logReaderService.removeLogListener(this)
+  }
+}

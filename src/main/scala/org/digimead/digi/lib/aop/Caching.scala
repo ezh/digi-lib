@@ -23,8 +23,7 @@ import scala.concurrent.Await
 
 import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.cache.{ Caching => CCaching }
-import org.digimead.digi.lib.log.Loggable
-import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
+import org.digimead.digi.lib.log.api.Loggable
 
 import com.escalatesoft.subcut.inject.BindingModule
 
@@ -116,24 +115,12 @@ object Caching {
 
   def inner(): CCaching = DI.implementation
 
-  class Basic {
-    @cache
-    def cached[T](f: () => T) = f()
-  }
   /**
    * Dependency injection routines
    */
   private object DI extends DependencyInjection.PersistentInjectable {
-    implicit def bindingModule = DependencyInjection()
     /** The caching instance cache */
-    @volatile var implementation: CCaching = inject[CCaching]
-
-    override def injectionAfter(newModule: BindingModule) {
-      implementation = inject[CCaching]
-    }
-    override def injectionBefore(newModule: BindingModule) {
-      DependencyInjection.assertLazy[CCaching](None, newModule)
-    }
+    lazy val implementation: CCaching = inject[CCaching]
   }
 }
 

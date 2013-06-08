@@ -1,4 +1,4 @@
-digi-lib
+digi-lib [![Build Status](https://travis-ci.org/ezh/digi-lib.png?branch=master)](https://travis-ci.org/ezh/digi-lib)
 ========
 
 [![Build Status](https://travis-ci.org/ezh/digi-lib.png?branch=master)](https://travis-ci.org/ezh/digi-lib)
