@@ -18,17 +18,13 @@
 
 package org.digimead.digi.lib.cache
 
-import java.util.concurrent.TimeUnit
-
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.SynchronizedMap
-import scala.concurrent.duration.Duration
 import scala.concurrent.duration.DurationInt
 import scala.ref.SoftReference
 
 import org.digimead.digi.lib.DependencyInjection
-import org.digimead.digi.lib.log.Loggable
-import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
+import org.digimead.digi.lib.log.api.Loggable
 
 import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
@@ -38,24 +34,24 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.util.Timeout
 
-import scala.language.postfixOps
+import language.implicitConversions
+import language.postfixOps
 
 class Caching(implicit val bindingModule: BindingModule) extends Injectable with Loggable {
   val inner = inject[Cache[String, Any]]("Cache.Engine")
   val requestTimeout = Timeout(1 seconds)
   val ttl = inject[Long]("Cache.TTL")
-  val shutdownHook = injectOptional[() => Any]("Cache.ShutdownHook")
   // key -> (timestamp, data)
   private[cache] val map = new HashMap[String, SoftReference[(Long, Any)]]() with SynchronizedMap[String, SoftReference[(Long, Any)]]
-  log.debug("alive")
+  log.debug("Alive.")
 
   val actor = Caching.actorSystem.actorOf(Props(new Actor()))
 
   def init() {
-    log.debug("initialize caching with " + this.toString)
+    log.debug("Initialize caching with %s.".format(this.toString))
   }
   def deinit() {
-    log.debug("deinitialize " + this.toString)
+    log.debug("Deinitialize %s.".format(this.toString))
     val stopped = akka.pattern.Patterns.gracefulStop(Caching.inner.actor, 5 seconds, Caching.actorSystem)
     scala.concurrent.Await.result(stopped, 5 seconds)
   }
@@ -130,20 +126,19 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
             log.warn(e.getMessage(), e)
         }
       case message: AnyRef =>
-        log.errorWhere("skip unknown message " + message.getClass.getName + ": " + message)
+        log.errorWhere("Skip unknown message %s: %s.".format(message.getClass.getName, message))
       case message =>
-        log.errorWhere("skip unknown message " + message)
+        log.errorWhere("Skip unknown message %s.".format(message))
     }
   }
 }
 
 object Caching {
-  Runtime.getRuntime().addShutdownHook(new Thread {
-    override def run = if (DependencyInjection.get.nonEmpty) DI.implementation.shutdownHook.foreach(_())
-  })
+  implicit def Caching2implementation(l: Caching.type): Caching = inner
 
-  def inner(): Caching = DI.implementation
   def actorSystem(): ActorSystem = DI.system
+  def inner(): Caching = DI.implementation
+  def shutdownHook() = DI.shutdownHook
 
   object Message {
     case class Get(namespace: scala.Enumeration#Value, key: String, ttl: Long = Caching.inner.ttl)
@@ -159,22 +154,11 @@ object Caching {
    * Dependency injection routines
    */
   private object DI extends DependencyInjection.PersistentInjectable {
-    implicit def bindingModule = DependencyInjection()
     /** Actor system DI cache */
-    @volatile var system = inject[ActorSystem]
+    lazy val system = inject[ActorSystem]
     /** Caching implementation DI cache */
-    @volatile var implementation = inject[Caching]
-
-    override def injectionAfter(newModule: BindingModule) {
-      system = inject[ActorSystem]
-      implementation = inject[Caching]
-      implementation.init
-    }
-    override def injectionBefore(newModule: BindingModule) {
-      DependencyInjection.assertLazy[ActorSystem](None, newModule)
-    }
-    override def injectionOnClear(oldModule: BindingModule) {
-      implementation.deinit()
-    }
+    lazy val implementation = inject[Caching]
+    /** User defined shutdown hook */
+    lazy val shutdownHook = injectOptional[() => Any]("Cache.ShutdownHook")
   }
 }

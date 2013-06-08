@@ -19,49 +19,48 @@
 package org.digimead.digi.lib.log
 
 import scala.annotation.implicitNotFound
-
 import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.log.logger.RichLogger
-import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 import org.scalatest.FunSpec
 import org.scalatest.PrivateMethodTester
 import org.scalatest.matchers.ShouldMatchers
-
 import com.escalatesoft.subcut.inject.NewBindingModule
+import org.digimead.digi.lib.log.api.Loggable
+import org.scalatest.WordSpec
+import org.digimead.lib.test.LoggingHelper
 
-class LogSpec extends FunSpec with ShouldMatchers {
-  org.apache.log4j.BasicConfigurator.resetConfiguration()
-  org.apache.log4j.BasicConfigurator.configure()
-
-  describe("A Log") {
-    it("should have proper reinitialization") {
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+class LogSpec000 extends LogSpec.Base {
+  "A Log Singleton" should {
+    "be persistent" in {
       val config = org.digimead.digi.lib.cache.default ~ org.digimead.digi.lib.default
-      DependencyInjection.set(config)
+      DependencyInjection(config)
 
       config.inject[Logging](None) should be theSameInstanceAs (config.inject[Logging](None))
       val logging1 = Logging inner ()
-      DependencyInjection.reset()
       val logging2 = Logging inner ()
       logging1 should be theSameInstanceAs (logging2)
       logging1.record should be theSameInstanceAs (logging2.record)
       logging1.record.dateFormat should be theSameInstanceAs (logging2.record.dateFormat)
       logging1 should be theSameInstanceAs (config.inject[Logging](None))
-      logging1.builder should not be theSameInstanceAs(config.inject[(String) => RichLogger](Some("Log.Builder")))
+      logging1.builder should not be theSameInstanceAs(config.inject[(String) => api.RichLogger](Some("Log.Builder")))
 
-      DependencyInjection.reset(config ~ (NewBindingModule.newBindingModule(module => {})))
+      DependencyInjection(config ~ (NewBindingModule.newBindingModule(module => {})), false)
       val logging3 = Logging inner ()
-      logging1 should not be theSameInstanceAs(logging3)
-      logging2 should not be theSameInstanceAs(logging3)
+      logging1 should be theSameInstanceAs (logging3)
+      logging2 should be theSameInstanceAs (logging3)
     }
-    it("should create singeton with default parameters") {
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+  }
+}
+
+class LogSpec001 extends LogSpec.Base {
+  "A Log Singleton" should {
+    "create instance with default parameters" in {
       val config = org.digimead.digi.lib.log.default ~ org.digimead.digi.lib.default
-      DependencyInjection.set(config)
+      DependencyInjection(config)
       val instance = Logging inner ()
       instance.record should not be (null)
       instance.builder should not be (null)
-      instance.isTraceWhereEnabled should be(false)
+      instance.isWhereEnabled should be(false)
       instance.bufferedThread should be(None)
       instance.bufferedFlushLimit should be(1000)
       instance.shutdownHook should be(None)
@@ -77,38 +76,30 @@ class LogSpec extends FunSpec with ShouldMatchers {
       test.log.isInstanceOf[RichLogger] should be(true)
       test.log.base.isInstanceOf[org.slf4j.impl.Log4jLoggerAdapter] should be(true)
     }
-    it("should create singeton with custom parameters") {
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
+  }
+}
+
+class LogSpec002 extends LogSpec.Base {
+  "A Log Singleton" should {
+    "create instance with custom parameters" in {
       val config1 = org.digimead.digi.lib.log.default ~ org.digimead.digi.lib.default
       val config2 = new NewBindingModule(module => {
         module.bind[Boolean] identifiedBy "Log.TraceWhereEnabled" toSingle { true }
       })
       val config = config2 ~ config1
       config.inject[Boolean](Some("Log.TraceWhereEnabled")) should be(true)
-      DependencyInjection.set(config)
+      DependencyInjection(config)
       val instance = Logging inner ()
-      instance.isTraceWhereEnabled should be(true)
+      instance.isWhereEnabled should be(true)
     }
-    it("should call deinit on reinitialization") {
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
-      @volatile var deinitCall = false
-      val config1 = org.digimead.digi.lib.default
-      val config2 = new NewBindingModule(module => {
-        module.bind[Logging] toModuleSingle { implicit module =>
-          new Logging {
-            override def deinit() {
-              deinitCall = true
-              super.deinit()
-            }
-          }
-        }
-      })
-      deinitCall should be(false)
-      // set
-      DependencyInjection.set(config2 ~ config1)
-      // clear
-      DependencyInjection.get.foreach(_ => DependencyInjection.clear)
-      deinitCall should be(true)
-    }
+  }
+}
+
+object LogSpec {
+  trait Base extends WordSpec with LoggingHelper with ShouldMatchers {
+    after { adjustLoggingAfter }
+    before { adjustLoggingBefore }
+
+    override def beforeAll(configMap: Map[String, Any]) { adjustLoggingBeforeAll(configMap) }
   }
 }

@@ -22,7 +22,6 @@ import java.util.Date
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import scala.Array.canBuildFrom
-import scala.annotation.implicitNotFound
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.HashMap
@@ -32,22 +31,22 @@ import scala.util.control.Breaks.break
 import scala.util.control.Breaks.breakable
 
 import org.digimead.digi.lib.DependencyInjection
+import org.digimead.digi.lib.log.api.Loggable
+import org.digimead.digi.lib.log.api.RichLogger
 import org.digimead.digi.lib.log.appender.Appender
-import org.digimead.digi.lib.log.logger.RichLogger
-import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 import org.slf4j.LoggerFactory
 
 import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
 
-import scala.language.implicitConversions
+import language.implicitConversions
 
 class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val record = inject[Record]
   val builder = inject[(String) => RichLogger]("Log.Builder")
   /** prefix for all adb logcat TAGs, everyone may change (but should not) it on his/her own risk */
   val logPrefix = injectOptional[String]("Log.Buffered") getOrElse "@"
-  val isTraceWhereEnabled = injectOptional[Boolean]("Log.TraceWhereEnabled") getOrElse false
+  val isWhereEnabled = injectOptional[Boolean]("Log.TraceWhereEnabled") getOrElse false
   val bufferedThread = inject[Option[Logging.BufferedLogThread]]("Log.BufferedThread")
   val bufferedFlushLimit = injectOptional[Int]("Log.BufferedFlushLimit") getOrElse 1000
   val bufferedAppender = {
@@ -60,7 +59,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val richLogger = new HashMap[String, RichLogger]() with SynchronizedMap[String, RichLogger]
   lazy val commonLogger: RichLogger = {
     val name = if (bufferedThread.nonEmpty) "@~*~*~*~*" else getClass.getName()
-    val logger = new RichLogger(LoggerFactory.getLogger(name), isTraceWhereEnabled)
+    val logger = new org.digimead.digi.lib.log.logger.RichLogger(LoggerFactory.getLogger(name), isWhereEnabled)
     richLogger(name) = logger
     logger
   }
@@ -70,12 +69,12 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   def init() {
     Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName,
       if (bufferedThread.nonEmpty)
-        "initialize logging with buffered slf4j logger and " + this.toString
+        s"Initialize logging with buffered slf4j logger and ${this.toString}."
       else
-        "initialize logging with direct slf4j logger and " + this.toString)
+        s"Initialize logging with direct slf4j logger and ${this.toString}.")
     bufferedAppender.foreach {
       appender =>
-        Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "initialize appender " + appender)
+        Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, s"Initialize appender $appender.")
         appender.init()
     }
     bufferedThread.foreach(_.init)
@@ -83,13 +82,13 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
 
   def deinit() {
     bufferedThread.foreach(_.deinit)
-    Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "deinitialize " + this.toString)
+    Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, s"Deinitialize ${this.toString}")
     flush(0)
     bufferedQueue.clear()
     bufferedQueue.synchronized { bufferedQueue.notifyAll() }
     bufferedAppender.foreach {
       appender =>
-        Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, "deinitialize appender " + appender)
+        Logging.addToLog(new Date(), Thread.currentThread.getId, Record.Level.Debug, commonLogger.getName, s"Deinitialize appender ${appender}")
         flush(0)
         appender.flush()
         appender.deinit()
@@ -98,7 +97,6 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   def offer(record: Record.Message) = bufferedQueue.synchronized {
     bufferedQueue.offer(record)
     bufferedQueue.notifyAll
-    Logging.Event.publish(new Logging.Event.Incoming(record))
   }
   def flush(timeout: Int): Int = synchronized {
     if (bufferedAppender.isEmpty)
@@ -136,10 +134,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
 object Logging {
   implicit def Logging2implementation(l: Logging.type): Logging = inner
   private val loggingObjectName = getClass.getName
-  private val loggableClassName = classOf[Loggable].getName
-  Runtime.getRuntime().addShutdownHook(new Thread {
-    override def run = if (DependencyInjection.get.nonEmpty) Logging.injectOptional[Logging].foreach(_.shutdownHook.foreach(_()))
-  })
+  private val loggableClassName = classOf[org.digimead.digi.lib.log.api.Loggable].getName
 
   def addToLog(date: Date, tid: Long, level: Record.Level, tag: String, message: String): Unit =
     addToLog(date, tid, level, tag, message, None)
@@ -209,8 +204,9 @@ object Logging {
     }
   }
   def inner() = DI.implementation
+  def shutdownHook() = DI.shutdownHook
 
-  abstract class BufferedLogThread extends Thread("Generic buffered logger for " + Logging.getClass.getName) {
+  abstract class BufferedLogThread extends Thread(s"Generic buffered logger for ${Logging.getClass.getName}") {
     def init(): Unit
     def threadSuspend(): Unit
     def threadResume(): Unit
@@ -218,36 +214,24 @@ object Logging {
   }
   sealed trait Event
   object Event extends Publisher[Event] {
-    override protected[Logging] def publish(event: Event) = try {
+    override protected[log] def publish(event: Event) = try {
       super.publish(event)
     } catch {
       // This catches all Throwables because we want to record exception to log file
       case e: Throwable =>
         inner.commonLogger.error(e.getMessage(), e)
     }
-    case class Incoming(val record: Record.Message) extends Event
+    case class Incoming(val logger: RichLogger, val level: Record.Level, val message: String, throwable: Option[Throwable]) extends Event
     case class Outgoing(val record: Record.Message) extends Event
     case class RegisterLogger(val logger: RichLogger) extends Event
-  }
-  object Where {
-    val ALL = -1
-    val HERE = -2
-    val BEFORE = -3
   }
   /**
    * Dependency injection routines
    */
   private object DI extends DependencyInjection.PersistentInjectable {
-    implicit def bindingModule = DependencyInjection()
-    /** Logging implementation DI cache */
-    @volatile var implementation = inject[Logging]
-
-    override def injectionAfter(newModule: BindingModule) {
-      implementation = inject[Logging]
-      implementation.init()
-    }
-    override def injectionOnClear(oldModule: BindingModule) {
-      implementation.deinit()
-    }
+    /** Logging implementation */
+    lazy val implementation = inject[Logging]
+    /** User defined shutdown hook */
+    lazy val shutdownHook = injectOptional[() => Any]("Log.ShutdownHook")
   }
 }

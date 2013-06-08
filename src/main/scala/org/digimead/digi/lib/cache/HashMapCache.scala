@@ -20,8 +20,7 @@ package org.digimead.digi.lib.cache
 
 import scala.ref.SoftReference
 
-import org.digimead.digi.lib.log.Loggable
-import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
+import org.digimead.digi.lib.log.api.Loggable
 
 import scala.language.postfixOps
 

@@ -26,6 +26,8 @@ import scala.ref.WeakReference
 import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
 
+// We may reinitialize singleton with OSGi bundle reload.
+/** Immutable dependency injection container */
 object DependencyInjection {
   private val initializationRequired = new AtomicBoolean(true)
   private var di: BindingModule = null
@@ -34,11 +36,44 @@ object DependencyInjection {
    * It is impossible to use Class[PersistentInjectable] as key
    *  because it starts Scala object initialization
    */
-  private val injectables = new mutable.HashMap[String, WeakReference[PersistentInjectable]] with mutable.SynchronizedMap[String, WeakReference[PersistentInjectable]]
+  private val injectables = new mutable.LinkedHashMap[String, WeakReference[PersistentInjectable]] with mutable.SynchronizedMap[String, WeakReference[PersistentInjectable]]
 
+  /** Returns the current dependency injection content. */
   def apply(): BindingModule = synchronized {
-    assert(di != null, "dependency injection is not initialized")
+    if (this.di == null)
+      throw new IllegalStateException("Dependency injection is not initialized.")
     di
+  }
+  /** Initialize the dependency injection framework. */
+  def apply(di: BindingModule, checkState: Boolean = true): Unit = synchronized {
+    if (this.di != null)
+      if (checkState)
+        throw new IllegalStateException("Dependency injection is already initialized.")
+      else
+        return
+    this.di = di // prevent for the situation with this.di == null
+    // initialize objects
+    injectables.foreach {
+      case (clazz, ref) =>
+        ref.get match {
+          case Some(pi) =>
+            // initialize PersistentInjectable with assert
+            assert(pi.bindingModule != null)
+          case None =>
+            try {
+              val pi = Class.forName(clazz).getField("MODULE$").get(null).asInstanceOf[DependencyInjection.PersistentInjectable]
+              // initialize PersistentInjectable with if
+              if (pi.bindingModule != null)
+                injectables(clazz) = new WeakReference(pi)
+            } catch {
+              case e: Throwable =>
+                System.err.println("DependencyInjection error: " + e)
+                throw e
+            }
+        }
+    }
+    // call commit after initialization
+    injectables.foreach(clazz => getPersistentInjectable(clazz._1).map(_.injectionCommit(di)))
   }
   def assertLazy[T: Manifest](name: Option[String], module: BindingModule) = Option(module).foreach { m =>
     val bindingKey = key[T](name)
@@ -47,58 +82,6 @@ object DependencyInjection {
     assert(bindingClassName.endsWith(".LazyModuleInstanceProvider") || bindingClassName.endsWith(".LazyInstanceProvider"),
       s"Unexpected binding provider for $bindingKey: $bindingClassName. Expect LazyInstanceProvider or LazyModuleInstanceProvider.")
   }
-  def set(di: BindingModule, injectionHook: => Unit = {}): BindingModule = synchronized {
-    assert(this.di == null, "dependency injection is already initialized")
-    if (initializationRequired.compareAndSet(true, false)) {
-      this.di = di // prevent for the situation with this.di == null
-      // initialize objects
-      injectables.foreach {
-        case (clazz, ref) =>
-          ref.get match {
-            case Some(pi) =>
-              // initialize PersistentInjectable with assert
-              assert(pi.bindingModule != null)
-            case None =>
-              try {
-                val pi = Class.forName(clazz).getField("MODULE$").get(null).asInstanceOf[DependencyInjection.PersistentInjectable]
-                // initialize PersistentInjectable with if
-                if (pi.bindingModule != null)
-                  injectables(clazz) = new WeakReference(pi)
-              } catch {
-                case e: Throwable =>
-                  System.err.println("DependencyInjection error: " + e)
-                  throw e
-              }
-          }
-      }
-    }
-    // We set BindingModule before any Injectable created at the beginning, so injectables map is empty
-    Option(di).foreach { module =>
-      // invoke injectionBefore
-      injectables.foreach(clazz =>
-        getPersistentInjectable(clazz._1).map(_.injectionBefore(module)))
-    }
-    this.di = di
-    injectionHook
-    Option(di).foreach(module => injectables.foreach(clazz =>
-      getPersistentInjectable(clazz._1).map(_.injectionAfter(module))))
-    di
-  }
-  def clear(): BindingModule = synchronized {
-    assert(di != null, "dependency injection is not initialized")
-    val result = this.di
-    if (initializationRequired.get) {
-      this.di = null
-      return result
-    } // there is no initialization yet
-    Option(result).foreach { module =>
-      injectables.foreach(clazz =>
-        getPersistentInjectable(clazz._1).map(_.injectionOnClear(module)))
-    }
-    this.di = null
-    result
-  }
-  def reset(config: BindingModule = di) = Option(config).foreach(config => { Option(di).foreach(_ => clear); set(config) })
   def get(): Option[BindingModule] = synchronized { Option(di) }
   def key[T](name: String)(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, Some(name))
   def key[T](name: Option[String])(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, name)
@@ -144,6 +127,8 @@ object DependencyInjection {
         None
     }
   trait PersistentInjectable extends Injectable {
+    implicit def bindingModule = DependencyInjection.di
+
     setPersistentInjectable(this)
     /**
      * Inject an instance for the given trait based on the class type required. If there is no binding, this
@@ -281,8 +266,6 @@ object DependencyInjection {
     override def injectOptional[T <: Any](name: String)(implicit m: scala.reflect.Manifest[T]): Option[T] =
       synchronized { super.injectOptional[T](name) }
 
-    def injectionAfter(newModule: BindingModule) {}
-    def injectionBefore(newModule: BindingModule) {}
-    def injectionOnClear(oldModule: BindingModule) {}
+    def injectionCommit(newModule: BindingModule) {}
   }
 }

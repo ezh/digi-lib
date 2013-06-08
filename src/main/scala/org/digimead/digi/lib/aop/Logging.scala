@@ -20,9 +20,9 @@
  * best viewer is *nix console with command line
  * grcat - generic colouriser grcat by Radovan Garabík
  * adb logcat -v threadtime | awk '{for(i=1;i<=NF;i++)if(i!=1&&i!=2)printf$i OFS;print""}' | grcat adb.conf
- * 
+ *
  * OR
- * 
+ *
  * adb logcat -v threadtime | awk '{
  *  for (i=1; i<=NF; i++) {
  *#    if (i==1) printf$i OFS;printf ""
@@ -58,9 +58,8 @@
 package org.digimead.digi.lib.aop
 
 import org.aspectj.lang.Signature
-import org.digimead.digi.lib.log.Loggable
+import org.digimead.digi.lib.log.api.Loggable
 import org.digimead.digi.lib.log.{ Logging => LLogging }
-import org.digimead.digi.lib.log.logger.RichLogger.rich2slf4j
 
 object Logging {
   def enteringMethod(file: String, line: Int, signature: Signature, obj: AnyRef) {
@@ -121,12 +120,6 @@ object Logging {
         LLogging.inner.commonLogger.trace("[L%04d".format(line) + "] leavingMethodException " + className + "::" + methodName + " at " + file.takeWhile(_ != '.') + ". Reason: " + exceptionMessage)
     }
   }
-  class Basic extends Loggable {
-    @log
-    def void[T](f: () => T) { f() }
-    @log
-    def nonVoid[T](f: () => T) = f()
-  }
 }
 
 /*
@@ -135,7 +128,7 @@ Example:
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.digimead.digi.lib.aop.log;
-import org.digimead.digi.lib.log.Loggable;
+import org.digimead.digi.lib.log.api.Loggable;
 
 privileged public final aspect AspectLogging {
 	public pointcut loggingNonVoid(Loggable obj, log l) : target(obj) && execution(@log !void *(..)) && @annotation(l);
