@@ -4,6 +4,6 @@ object PluginDef extends Build {
   lazy val root = Project("plugins", file(".")) dependsOn(aspectj, coveralls, scct, osgi)
   lazy val aspectj = uri("git://github.com/ezh/sbt-aspectj-nested.git#83f7c773bd105542e2992865af553e22752090ca")
   lazy val coveralls = uri("git://github.com/ezh/xsbt-coveralls-plugin.git#465a58d42f6617cb2383964d0388b4852b07dc66")
-  lazy val scct = uri("git://github.com/ezh/sbt-scct.git#dbda90348a260995dea29eee97d03457742a8a67")
   lazy val osgi = uri("git://github.com/digimead/sbt-osgi-manager.git#0.0.1.2")
+  lazy val scct = uri("git://github.com/ezh/sbt-scct.git#dbda90348a260995dea29eee97d03457742a8a67")
 }
