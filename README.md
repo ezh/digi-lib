@@ -16,13 +16,13 @@ DOCUMENTATION
 
 ```scala
 libraryDependencies += Seq(
-  "org.digimead" %% "digi-lib" % "0.2"
+  "org.digimead" %% "digi-lib" % "0.2.3.1"
 )
 
-resolvers += "digi-lib" at "http://ezh.github.com/digi-lib/releases"
-```
+resolvers += "digimead-maven" at "http://storage.googleapis.com/maven.repository.digimead.org/"
 
-Download jar files directly from the [GitHub](https://github.com/ezh/digi-lib/tree/master/publish/releases/org/digimead)
+resolvers += Resolver.url("digimead-ivy", url("http://storage.googleapis.com/ivy.repository.digimead.org/"))(Resolver.defaultIvyPatterns)
+```
 
 ## Target platform
 
