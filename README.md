@@ -15,12 +15,18 @@ DOCUMENTATION
 ### Setup
 
 ```scala
-libraryDependencies += Seq(
-  "org.digimead" %% "digi-lib" % "0.2.3.1"
-)
+libraryDependencies += "org.digimead" %% "digi-lib" % "0.2.3.1"
+```
 
+Maven repository
+
+```scala
 resolvers += "digimead-maven" at "http://storage.googleapis.com/maven.repository.digimead.org/"
+```
 
+Ivy repository
+
+```scala
 resolvers += Resolver.url("digimead-ivy", url("http://storage.googleapis.com/ivy.repository.digimead.org/"))(Resolver.defaultIvyPatterns)
 ```
 
