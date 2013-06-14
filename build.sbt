@@ -18,7 +18,7 @@
 import sbt.aspectj.nested._
 import sbt.osgi.manager._
 
-AspectJNested ++ OSGiManager ++ sbt.scct.ScctPlugin.instrumentSettings
+AspectJNested ++ OSGiManager // ++ sbt.scct.ScctPlugin.instrumentSettings - ScctPlugin is broken, have no time to fix
 
 name := "Digi-Lib"
 
@@ -40,8 +40,8 @@ inConfig(OSGiConf)({
     osgiBndBundleActivator := "org.digimead.digi.lib.OSGi",
     osgiBndBundleSymbolicName := "org.digimead.digi.lib",
     osgiBndBundleCopyright := "Copyright © 2011-2013 Alexey B. Aksenov/Ezh. All rights reserved.",
-    osgiBndExportPackage := List("org.digimead.*"),
-    osgiBndImportPackage := List("!org.aspectj.*", "*"),
+    osgiBndExportPackage := List("org.digimead.*", "com.escalatesoft.subcut.inject"),
+    osgiBndImportPackage := List("!org.aspectj.*", "com.escalatesoft.subcut.inject", "*"),
     osgiBndBundleLicense := "http://www.apache.org/licenses/LICENSE-2.0.txt;description=The Apache Software License, Version 2.0"
   )
 })
@@ -86,7 +86,7 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % "2.1.4",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
     "org.aspectj" % "aspectjrt" % "1.7.2",
-    "org.digimead" %% "digi-lib-test" % "0.2.2.1" % "test",
+    "org.digimead" %% "digi-lib-test" % "0.2.2.2" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
     "org.slf4j" % "slf4j-api" % "1.7.5"
@@ -98,9 +98,7 @@ libraryDependencies ++= Seq(
 
 parallelExecution in Test := false
 
-parallelExecution in sbt.scct.ScctPlugin.ScctTest := false
-
-testGrouping <<= (definedTests in Test) map { tests =>
+testGrouping in Test <<= (definedTests in Test) map { tests =>
   tests map { test =>
     new Tests.Group(
       name = test.name,

@@ -20,7 +20,7 @@ package org.digimead.digi.lib.aop.external;
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.digimead.digi.lib.aop.log;
-import org.digimead.digi.lib.log.Loggable;
+import org.digimead.digi.lib.log.api.Loggable;
 
 privileged public final aspect AspectLogging {
 	public pointcut loggingNonVoid(Loggable obj, log l) : target(obj) && execution(@log !void *(..)) && @annotation(l);
