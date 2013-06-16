@@ -41,7 +41,7 @@ class OSGi extends BundleActivator with LogListener with ServiceTrackerCustomize
     Option(context.getServiceReference(classOf[api.DependencyInjection])).
       map { currencyServiceRef => (currencyServiceRef, context.getService(currencyServiceRef)) } match {
         case Some((reference, diService)) =>
-          // DI already initialized somewhere so logging and caching must be too
+          // DI is already initialized somewhere so logging and caching must be too
           log.debug("Start Digi-Lib. Reinject DI.")
           DependencyInjection(diService.getDependencyInjection, false)
           context.ungetService(reference)
