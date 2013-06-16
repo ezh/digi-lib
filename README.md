@@ -15,18 +15,24 @@ DOCUMENTATION
 ### Setup
 
 ```scala
-libraryDependencies += Seq(
-  "org.digimead" %% "digi-lib" % "0.2"
-)
-
-resolvers += "digi-lib" at "http://ezh.github.com/digi-lib/releases"
+libraryDependencies += "org.digimead" %% "digi-lib" % "0.2.3.1"
 ```
 
-Download jar files directly from the [GitHub](https://github.com/ezh/digi-lib/tree/master/publish/releases/org/digimead)
+Maven repository
+
+```scala
+resolvers += "digimead-maven" at "http://storage.googleapis.com/maven.repository.digimead.org/"
+```
+
+Ivy repository
+
+```scala
+resolvers += Resolver.url("digimead-ivy", url("http://storage.googleapis.com/ivy.repository.digimead.org/"))(Resolver.defaultIvyPatterns)
+```
 
 ## Target platform
 
-* Scala 2.10.1 (request for more if needed)
+* Scala 2.10.2 (request for more if needed)
 * JVM 1.6+
 
 ## Participate in the development ##

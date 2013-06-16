@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,22 +37,35 @@ class OSGi extends BundleActivator with LogListener with ServiceTrackerCustomize
 
   /** Start bundle. */
   def start(context: BundleContext) {
-    log.debug("Start Digi-Lib.")
     this.context = Some(context)
-    val logReaderTracker = new ServiceTracker[LogReaderService, LogReaderService](context, classOf[LogReaderService].getName(), this)
-    logReaderTracker.open()
-    this.logReaderTracker = Some(logReaderTracker)
-    Logging.init()
-    Caching.init()
+    Option(context.getServiceReference(classOf[api.DependencyInjection])).
+      map { currencyServiceRef => (currencyServiceRef, context.getService(currencyServiceRef)) } match {
+        case Some((reference, diService)) =>
+          // DI is already initialized somewhere so logging and caching must be too
+          log.debug("Start Digi-Lib. Reinject DI.")
+          DependencyInjection(diService.getDependencyInjection, false)
+          context.ungetService(reference)
+        case None =>
+          // DI must be initialized somewhere but we must initialize logging and caching
+          log.debug("Start Digi-Lib.")
+          val logReaderTracker = new ServiceTracker[LogReaderService, LogReaderService](context, classOf[LogReaderService].getName(), this)
+          logReaderTracker.open()
+          this.logReaderTracker = Some(logReaderTracker)
+          Logging.init()
+          Caching.init()
+      }
+
   }
   /** Stop bundle. */
   def stop(context: BundleContext) {
     log.debug("Stop Digi-Lib.")
-    Caching.shutdownHook.foreach(_())
-    Caching.deinit()
-    Logging.shutdownHook.foreach(_())
-    Logging.deinit()
-    this.logReaderTracker.foreach(_.close())
+    this.logReaderTracker.foreach { tracker =>
+      Caching.shutdownHook.foreach(_())
+      Caching.deinit()
+      Logging.shutdownHook.foreach(_())
+      Logging.deinit()
+      tracker.close()
+    }
     this.logReaderTracker = None
     this.context = None
   }

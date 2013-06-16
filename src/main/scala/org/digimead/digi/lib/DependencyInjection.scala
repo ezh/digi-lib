@@ -29,14 +29,14 @@ import com.escalatesoft.subcut.inject.Injectable
 // We may reinitialize singleton with OSGi bundle reload.
 /** Immutable dependency injection container */
 object DependencyInjection {
-  private val initializationRequired = new AtomicBoolean(true)
+  private lazy val initializationRequired = new AtomicBoolean(true)
   private var di: BindingModule = null
   /**
    * map of Class[PersistentInjectable]
    * It is impossible to use Class[PersistentInjectable] as key
    *  because it starts Scala object initialization
    */
-  private val injectables = new mutable.LinkedHashMap[String, WeakReference[PersistentInjectable]] with mutable.SynchronizedMap[String, WeakReference[PersistentInjectable]]
+  private lazy val injectables = new mutable.LinkedHashMap[String, WeakReference[PersistentInjectable]] with mutable.SynchronizedMap[String, WeakReference[PersistentInjectable]]
 
   /** Returns the current dependency injection content. */
   def apply(): BindingModule = synchronized {
@@ -85,6 +85,7 @@ object DependencyInjection {
   def get(): Option[BindingModule] = synchronized { Option(di) }
   def key[T](name: String)(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, Some(name))
   def key[T](name: Option[String])(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, name)
+  def reset() = synchronized { di = null }
   /**
    * create wrapper for SubCut toModuleSingle
    * singleton will initialized only once
@@ -127,7 +128,11 @@ object DependencyInjection {
         None
     }
   trait PersistentInjectable extends Injectable {
-    implicit def bindingModule = DependencyInjection.di
+    implicit def bindingModule = DependencyInjection.synchronized {
+      if (DependencyInjection.di == null)
+        throw new IllegalStateException("Dependency injection is not initialized.")
+      DependencyInjection.di
+    }
 
     setPersistentInjectable(this)
     /**
