@@ -19,19 +19,21 @@
 package org.digimead.digi.lib
 
 import org.digimead.digi.lib.cache.Caching
+import org.digimead.digi.lib.cache.Caching.Caching2implementation
 import org.digimead.digi.lib.log.Logging
+import org.digimead.digi.lib.log.Logging.Logging2implementation
 import org.digimead.digi.lib.log.api.Loggable
 import org.osgi.framework.BundleActivator
 import org.osgi.framework.BundleContext
-import org.osgi.util.tracker.ServiceTracker
-import org.osgi.service.log.LogService
+import org.osgi.framework.ServiceReference
 import org.osgi.service.log.LogEntry
 import org.osgi.service.log.LogListener
 import org.osgi.service.log.LogReaderService
+import org.osgi.service.log.LogService
+import org.osgi.util.tracker.ServiceTracker
 import org.osgi.util.tracker.ServiceTrackerCustomizer
-import org.osgi.framework.ServiceReference
 
-class OSGi extends BundleActivator with LogListener with ServiceTrackerCustomizer[LogReaderService, LogReaderService] with Loggable {
+class Activator extends BundleActivator with LogListener with ServiceTrackerCustomizer[LogReaderService, LogReaderService] with Loggable {
   @volatile protected var context: Option[BundleContext] = None
   @volatile protected var logReaderTracker: Option[ServiceTracker[LogReaderService, LogReaderService]] = None
 
@@ -99,5 +101,23 @@ class OSGi extends BundleActivator with LogListener with ServiceTrackerCustomize
   def removedService(serviceReference: ServiceReference[LogReaderService], logReaderService: LogReaderService) {
     log.debug("Unsubscribe log listener from " + logReaderService.getClass.getName)
     logReaderService.removeLogListener(this)
+  }
+}
+
+object Activator extends Loggable {
+  /** Non OSGi start. */
+  def start() {
+    //org.digimead.digi.lib.DependencyInjection(org.digimead.digi.lib.default)
+    log.debug("Start Digi-Lib.")
+    Logging.init()
+    Caching.init()
+  }
+  /** Non OSGi stop. */
+  def stop() {
+    log.debug("Stop Digi-Lib.")
+    Caching.shutdownHook.foreach(_())
+    Caching.deinit()
+    Logging.shutdownHook.foreach(_())
+    Logging.deinit()
   }
 }
