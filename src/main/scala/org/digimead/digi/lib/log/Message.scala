@@ -24,6 +24,7 @@ class Message(val date: Date,
   val tid: Long,
   val level: Record.Level,
   val tag: String,
+  val tagClass: Class[_],
   val message: String,
   val throwable: Option[Throwable],
   val pid: Int) extends Record.Message {

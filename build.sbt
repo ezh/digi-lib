@@ -86,7 +86,7 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % "2.1.4",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
     "org.aspectj" % "aspectjrt" % "1.7.2",
-    "org.digimead" %% "digi-lib-test" % "0.2.2.2" % "test",
+    "org.digimead" %% "digi-lib-test" % "0.2.2.3-SNAPSHOT" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
     "org.slf4j" % "slf4j-api" % "1.7.5"

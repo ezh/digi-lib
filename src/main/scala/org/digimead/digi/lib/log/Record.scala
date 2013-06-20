@@ -31,12 +31,13 @@ class Record(implicit val bindingModule: BindingModule) extends Injectable {
 }
 
 object Record {
-  type MessageBuilder = (Date, Long, Level, String, String, Option[Throwable], Int) => Message
+  type MessageBuilder = (Date, Long, Level, String, Class[_], String, Option[Throwable], Int) => Message
   trait Message {
     val date: Date
     val tid: Long
     val level: Record.Level
     val tag: String
+    val tagClass: Class[_]
     val message: String
     val throwable: Option[Throwable]
     val pid: Int

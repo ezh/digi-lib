@@ -23,44 +23,52 @@ import java.util.Date
 import org.digimead.digi.lib.log.Logging
 import org.digimead.digi.lib.log.Record
 
-/*
- * didn't used to involve implicits because of lack 2.8.x support
- */
+/** Base class that absolutely compatible with org.slf4j.Logger */
 class BaseLogger(val loggerName: java.lang.String,
   val isTraceEnabled: Boolean,
   val isDebugEnabled: Boolean,
   val isInfoEnabled: Boolean,
   val isWarnEnabled: Boolean,
   val isErrorEnabled: Boolean) extends AbstractBaseLogger(loggerName) {
+  /*
+   * What is this public volatile field doing here?
+   * - from the one side we must keep BaseLogger as close as possible to original org.slf4j.Logger,
+   *   so we able to instantiate it only with loggerName. loggerName is verbose, end user representation
+   *   like "MyLogger" instead of "clazz@anon$$1$x.fn2" based on class name.
+   * - from the other side we want to pass an original class to the end point because of user
+   *   that may want to filter everything that begins with "a.b.c."
+   */
+  /** Internal class tag for end user processing */
+  @volatile var loggerClass: Class[_] = classOf[AnyRef]
   def trace(msg: String): Unit = if (isTraceEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
-      msg, None, Logging.inner.record.pid))
+      loggerClass, msg, None, Logging.inner.record.pid))
   def trace(msg: String, t: Throwable): Unit = if (isTraceEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
-      msg, Some(t), Logging.inner.record.pid))
+      loggerClass, msg, Some(t), Logging.inner.record.pid))
   def debug(msg: String): Unit = if (isDebugEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
-      msg, None, Logging.inner.record.pid))
+      loggerClass, msg, None, Logging.inner.record.pid))
   def debug(msg: String, t: Throwable): Unit = if (isDebugEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
-      msg, Some(t), Logging.inner.record.pid))
+      loggerClass, msg, Some(t), Logging.inner.record.pid))
   def info(msg: String): Unit = if (isInfoEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
-      msg, None, Logging.inner.record.pid))
+      loggerClass, msg, None, Logging.inner.record.pid))
   def info(msg: String, t: Throwable): Unit = if (isInfoEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
-      msg, Some(t), Logging.inner.record.pid))
+      loggerClass, msg, Some(t), Logging.inner.record.pid))
   def warn(msg: String): Unit = if (isWarnEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
-      msg, None, Logging.inner.record.pid))
+      loggerClass, msg, None, Logging.inner.record.pid))
   def warn(msg: String, t: Throwable): Unit = if (isWarnEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
-      msg, Some(t), Logging.inner.record.pid))
+      loggerClass, msg, Some(t), Logging.inner.record.pid))
   def error(msg: String): Unit = if (isErrorEnabled)
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
-      msg, None, Logging.inner.record.pid))
+      loggerClass, msg, None, Logging.inner.record.pid))
   // always enabled
   def error(msg: String, t: Throwable): Unit =
     Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
-      msg, Some(t), Logging.inner.record.pid))
+      loggerClass, msg, Some(t), Logging.inner.record.pid))
 }

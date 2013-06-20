@@ -28,6 +28,7 @@ import org.digimead.digi.lib.log.MDC
 import org.digimead.digi.lib.log.NDC
 import org.digimead.digi.lib.log.Record
 import org.digimead.digi.lib.log.api.RichLogger
+import org.digimead.digi.lib.log.logger.BaseLogger
 import org.slf4j.LoggerFactory
 
 import com.escalatesoft.subcut.inject.BindingModule
@@ -40,20 +41,27 @@ package object log {
     module.bind[SimpleDateFormat] identifiedBy "Log.Record.DateFormat" toSingle { dateFormat }
     module.bind[Int] identifiedBy "Log.Record.PID" toSingle { -1 }
     module.bind[Record.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
-      level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
-      new Message(date, tid, level, tag, message, throwable, pid)
+      level: Record.Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
+      new Message(date, tid, level, tag, tagClass, message, throwable, pid)
     }
     module.bind[Record] toModuleSingle { implicit module => new Record }
-    module.bind[(String) => RichLogger] identifiedBy "Log.Builder" toProvider ((module: BindingModule) => {
+    module.bind[(String, Class[_]) => RichLogger] identifiedBy "Log.Builder" toProvider ((module: BindingModule) => {
       def isWhereEnabled = module.injectOptional[Boolean](Some("Log.TraceWhereEnabled")) getOrElse false
-      (name: String) => new org.digimead.digi.lib.log.logger.RichLogger(LoggerFactory.getLogger(name), isWhereEnabled)
+      (name: String, classTag: Class[_]) =>
+        val richLogger = new org.digimead.digi.lib.log.logger.RichLogger(LoggerFactory.getLogger(name), isWhereEnabled)
+        // add class tag if possible
+        richLogger.base match {
+          case base: BaseLogger => base.loggerClass = classTag
+          case other: org.slf4j.Logger => // skip other unknown logger
+        }
+        richLogger
     })
     module.bind[Logging] toModuleSingle { implicit module => new Logging }
   })
   lazy val defaultWithDC = new NewBindingModule(module => {
     module.bind[Record.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
-      level: Record.Level, tag: String, message: String, throwable: Option[Throwable], pid: Int) =>
-      new Message(date, tid, level, tag, message + " " + getMDC + getNDC, throwable, pid)
+      level: Record.Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
+      new Message(date, tid, level, tag, tagClass, message + " " + getMDC + getNDC, throwable, pid)
     }
 
     def getMDC() = {

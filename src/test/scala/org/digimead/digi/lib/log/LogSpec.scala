@@ -42,7 +42,7 @@ class LogSpec000 extends LogSpec.Base {
       logging1.record should be theSameInstanceAs (logging2.record)
       logging1.record.dateFormat should be theSameInstanceAs (logging2.record.dateFormat)
       logging1 should be theSameInstanceAs (config.inject[Logging](None))
-      logging1.builder should not be theSameInstanceAs(config.inject[(String) => api.RichLogger](Some("Log.Builder")))
+      logging1.builder should not be theSameInstanceAs(config.inject[(String, Class[_]) => api.RichLogger](Some("Log.Builder")))
 
       DependencyInjection(config ~ (NewBindingModule.newBindingModule(module => {})), false)
       val logging3 = Logging inner ()

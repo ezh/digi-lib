@@ -25,7 +25,7 @@ import org.digimead.digi.lib.log.Logging
 trait Loggable {
   @transient
   implicit lazy val log: RichLogger = try {
-    Logging.getLogger(getClass())
+    Logging.getLogger(getClass)
   } catch {
     // allow to catch real exception cause
     case e: NoClassDefFoundError =>
