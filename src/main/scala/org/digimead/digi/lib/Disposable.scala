@@ -20,13 +20,16 @@ package org.digimead.digi.lib
 
 import java.lang.ref.WeakReference
 
+import org.digimead.digi.lib.aop.{ log => alog }
+import org.digimead.digi.lib.log.api.Loggable
+
 /** Disposable interface. */
 trait Disposable {
   /** Disposable marker that points to manager. */
-  val disposeable: Disposable.Marker
+  protected val disposeable: Disposable.Marker
 
-  /** Dispose instance. It should nullify all fields via reflection. */
-  def dispose() {}
+  /** Dispose method. It should nullify all fields via reflection. */
+  protected def dispose()
 }
 
 object Disposable {
@@ -38,8 +41,45 @@ object Disposable {
     new Marker(new WeakReference(manager))
   }
 
+  /** Clean method that nullify all non primitive fields via reflection. */
+  protected def clean(obj: AnyRef): Unit =
+    obj.getClass().getDeclaredFields().foreach(field =>
+      if (!field.getType().isPrimitive()) try {
+        if (!field.isAccessible())
+          field.setAccessible(true)
+        field.set(obj, null)
+      } catch {
+        case e: Throwable =>
+          obj match {
+            case loggable: Loggable => try {
+              loggable.log.debug(s"Unable to clear field ${field} for class ${obj.getClass()}: " + e.getMessage)
+            } catch {
+              case e: Throwable => // not interesting
+            }
+            case other => // not interesting
+          }
+      })
+  /** Transitive disposable trait that is based on "Scala's Stackable Trait Pattern" */
+  trait Transitive extends Disposable {
+    /** Dispose method. It should nullify all fields via reflection. */
+    abstract override protected def dispose() {
+      super.dispose
+      clean(this)
+    }
+  }
+  /** Default disposable trait */
+  trait Default extends Disposable {
+    /** Stackable dispose method. */
+    protected def dispose() {
+      clean(this)
+    }
+  }
   /** Manager interface. */
   trait Manager {
+    /** Call protected dispose method. */
+    @alog
+    def callDispose(disposable: Disposable) =
+      disposable.dispose
     /** Register the disposable instance. */
     def register(disposable: Disposable)
   }
