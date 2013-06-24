@@ -45,7 +45,13 @@ class Activator extends BundleActivator with LogListener with ServiceTrackerCust
         case Some((reference, diService)) =>
           // DI is already initialized somewhere so logging and caching must be too
           log.debug("Start Digi-Lib. Reinject DI.")
-          DependencyInjection(diService.getDependencyInjection, false)
+          DependencyInjection.reset()
+          DependencyInjection(diService.getDependencyInjection)
+          diService.getDependencyValidator.foreach { validator =>
+            val invalid = DependencyInjection.validate(validator, this)
+            if (invalid.nonEmpty)
+              throw new IllegalArgumentException("Illegal DI keys found: " + invalid.mkString(","))
+          }
           context.ungetService(reference)
         case None =>
           // DI must be initialized somewhere but we must initialize logging and caching

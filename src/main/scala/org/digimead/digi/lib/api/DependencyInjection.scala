@@ -26,4 +26,9 @@ import com.escalatesoft.subcut.inject.BindingModule
 trait DependencyInjection {
   /** Returns actual DI. From the nonOSGi world, for example. */
   def getDependencyInjection(): BindingModule
+  /**
+   * Returns DI key validator if any.
+   * @return - f(x,y,z) where x is key manifest, y is key name, z is DI loader.
+   */
+  def getDependencyValidator(): Option[(Manifest[_], Option[String], Class[_]) => Boolean]
 }

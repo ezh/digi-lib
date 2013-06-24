@@ -44,10 +44,17 @@ object DependencyInjection {
       throw new IllegalStateException("Dependency injection is not initialized.")
     di
   }
-  /** Initialize the dependency injection framework. */
-  def apply(di: BindingModule, checkState: Boolean = true): Unit = synchronized {
+  /**
+   * Initialize the dependency injection framework.
+   * @param di the dependency injection module.
+   * @param stateValidator flag that require to throw IllegalStateException if DI is already initialized.
+   */
+  def apply(di: BindingModule, stateValidator: Boolean = true): Unit = synchronized {
+    /*
+     * Check if DI is already exists.
+     */
     if (this.di != null)
-      if (checkState)
+      if (stateValidator)
         throw new IllegalStateException("Dependency injection is already initialized.")
       else
         return
@@ -106,6 +113,15 @@ object DependencyInjection {
    */
   def setPersistentInjectable(pobj: PersistentInjectable) =
     injectables(pobj.getClass.getName()) = new WeakReference(pobj)
+  /**
+   * Check if BindingModule contains illegal bindings
+   * @param keyValidator f(x,y,z) that checks BindingModule key. DI may throws IllegalArgumentException if validator failed.
+   *    example use case: OSGi environment. Pass only keys that begin with java.*, scala.* or defined globally or available
+   * @return invalid keys
+   */
+  def validate(keyValidator: (Manifest[_], Option[String], Class[_]) => Boolean, instance: AnyRef) =
+    apply().bindings.keys.filterNot { key => keyValidator(key.m, key.name, instance.getClass) }
+
   /**
    * get persistent object from injectables
    */
