@@ -18,8 +18,9 @@
 
 package org.digimead.digi.lib.log.appender
 
-import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.log.api.Appender
+import org.digimead.digi.lib.log.api.Message
 
 object NullAppender extends Appender {
-  protected var f = (records: Array[Record.Message]) => {}
+  protected var f = (records: Array[Message]) => {}
 }

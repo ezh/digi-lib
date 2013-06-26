@@ -22,12 +22,12 @@ import java.util.Date
 
 class Message(val date: Date,
   val tid: Long,
-  val level: Record.Level,
+  val level: api.Level,
   val tag: String,
   val tagClass: Class[_],
   val message: String,
   val throwable: Option[Throwable],
-  val pid: Int) extends Record.Message {
+  val pid: Int) extends api.Message {
   override def toString = "%s P%05d T%05d %s %-24s %s".format(dateFormat.format(date),
     pid, tid, level.toString.charAt(0), tag + ":", message)
 }

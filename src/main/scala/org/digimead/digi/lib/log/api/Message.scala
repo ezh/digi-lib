@@ -1,6 +1,6 @@
 /**
  * Digi-Lib - base library for Digi components
- * 
+ *
  * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,21 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib.log.api
 
-import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Record
+import java.util.Date
 
-trait Appender {
-  protected var f: (Array[Record.Message]) => Unit
-  def init() {}
-  def apply(r: Array[Record.Message]) = f(r)
-  def deinit() {}
-  def flush() {}
-  def getF() = synchronized { f }
-  def setF(_f: (Array[Record.Message]) => Unit) = synchronized { f = _f }
+trait Message {
+  val date: Date
+  val tid: Long
+  val level: Level
+  val tag: String
+  val tagClass: Class[_]
+  val message: String
+  val throwable: Option[Throwable]
+  val pid: Int
+}
+
+object Message {
+  type MessageBuilder = (Date, Long, Level, String, Class[_], String, Option[Throwable], Int) => Message
 }

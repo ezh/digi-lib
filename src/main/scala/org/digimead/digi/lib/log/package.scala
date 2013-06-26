@@ -26,7 +26,7 @@ import scala.annotation.implicitNotFound
 import org.digimead.digi.lib.log.Logging
 import org.digimead.digi.lib.log.MDC
 import org.digimead.digi.lib.log.NDC
-import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.log.api.Level
 import org.digimead.digi.lib.log.api.RichLogger
 import org.digimead.digi.lib.log.logger.BaseLogger
 import org.slf4j.LoggerFactory
@@ -40,8 +40,8 @@ package object log {
     module.bind[Option[Logging.BufferedLogThread]] identifiedBy "Log.BufferedThread" toSingle { None }
     module.bind[SimpleDateFormat] identifiedBy "Log.Record.DateFormat" toSingle { dateFormat }
     module.bind[Int] identifiedBy "Log.Record.PID" toSingle { -1 }
-    module.bind[Record.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
-      level: Record.Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
+    module.bind[api.Message.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
+      level: Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
       new Message(date, tid, level, tag, tagClass, message, throwable, pid)
     }
     module.bind[Record] toModuleSingle { implicit module => new Record }
@@ -59,8 +59,8 @@ package object log {
     module.bind[Logging] toModuleSingle { implicit module => new Logging }
   })
   lazy val defaultWithDC = new NewBindingModule(module => {
-    module.bind[Record.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
-      level: Record.Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
+    module.bind[api.Message.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
+      level: Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
       new Message(date, tid, level, tag, tagClass, message + " " + getMDC + getNDC, throwable, pid)
     }
 

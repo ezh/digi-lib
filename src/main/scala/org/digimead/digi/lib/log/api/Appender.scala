@@ -16,21 +16,14 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib.log.api
 
-import org.digimead.digi.lib.log.api.Appender
-import org.digimead.digi.lib.log.api.Message
-
-object Console extends Appender {
-  protected var f = (records: Array[Message]) => synchronized {
-    records.foreach(r => {
-      System.err.println(r.toString())
-      r.throwable.foreach { t =>
-        System.err.print("\n")
-        t.printStackTrace(System.err)
-      }
-    })
-    System.err.flush()
-  }
-  override def flush() = System.err.flush()
+trait Appender {
+  protected var f: (Array[Message]) => Unit
+  def init() {}
+  def apply(r: Array[Message]) = f(r)
+  def deinit() {}
+  def flush() {}
+  def getF() = synchronized { f }
+  def setF(_f: (Array[Message]) => Unit) = synchronized { f = _f }
 }

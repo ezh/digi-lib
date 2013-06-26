@@ -37,7 +37,7 @@ version <<= (baseDirectory) { (b) => scala.io.Source.fromFile(b / "version").mkS
 inConfig(OSGiConf)({
   import OSGiKey._
   Seq[Project.Setting[_]](
-    osgiBndBundleActivator := "org.digimead.digi.lib.OSGi",
+    osgiBndBundleActivator := "org.digimead.digi.lib.Activator",
     osgiBndBundleSymbolicName := "org.digimead.digi.lib",
     osgiBndBundleCopyright := "Copyright © 2011-2013 Alexey B. Aksenov/Ezh. All rights reserved.",
     osgiBndExportPackage := List("org.digimead.*", "com.escalatesoft.subcut.inject"),
@@ -64,7 +64,7 @@ if (sys.env.contains("XBOOTCLASSPATH")) Seq(javacOptions += "-Xbootclasspath:" +
 
 aspectjSource in AJConf <<= sourceDirectory(_ / "test" / "aspectj")
 
-aspectjInputs in AJConf <<= classDirectory in Test map {dir => Seq(dir)}
+aspectjInputs in AJConf <<= (classDirectory in Compile, classDirectory in Test) map {(a,b) => Seq(a,b)}
 
 aspectjFilter in AJConf := { (input, aspects) =>
   input.name match {
@@ -72,6 +72,10 @@ aspectjFilter in AJConf := { (input, aspects) =>
     case other => Seq.empty
   }
 }
+
+aspectjClasspath in AJConf <<= (dependencyClasspath in Test) map { _.files }
+
+AJKey.aspectjInputResources in AJConf <<= copyResources in Test
 
 products in Test <<= (products in Test, aspectjWeaveArg in AJConf, aspectjGenericArg in AJConf) map { (_, a, b) => AspectJ.weave(a)(b) }
 
@@ -86,7 +90,7 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % "2.1.4",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
     "org.aspectj" % "aspectjrt" % "1.7.2",
-    "org.digimead" %% "digi-lib-test" % "0.2.2.3-SNAPSHOT" % "test",
+    "org.digimead" %% "digi-lib-test" % "0.2.2.4-SNAPSHOT" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
     "org.slf4j" % "slf4j-api" % "1.7.5"

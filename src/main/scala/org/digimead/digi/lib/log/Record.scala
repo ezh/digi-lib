@@ -25,29 +25,7 @@ import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
 
 class Record(implicit val bindingModule: BindingModule) extends Injectable {
-  val builder = inject[Record.MessageBuilder]("Log.Record.Builder")
+  val builder = inject[api.Message.MessageBuilder]("Log.Record.Builder")
   val pid = inject[Int]("Log.Record.PID")
   val dateFormat = inject[SimpleDateFormat]("Log.Record.DateFormat")
-}
-
-object Record {
-  type MessageBuilder = (Date, Long, Level, String, Class[_], String, Option[Throwable], Int) => Message
-  trait Message {
-    val date: Date
-    val tid: Long
-    val level: Record.Level
-    val tag: String
-    val tagClass: Class[_]
-    val message: String
-    val throwable: Option[Throwable]
-    val pid: Int
-  }
-  sealed trait Level
-  object Level {
-    case object Trace extends Level
-    case object Debug extends Level
-    case object Info extends Level
-    case object Warn extends Level
-    case object Error extends Level
-  }
 }

@@ -21,7 +21,7 @@ package org.digimead.digi.lib.aop
 import scala.Array.canBuildFrom
 import scala.concurrent.Await
 
-import org.digimead.digi.lib.DependencyInjection
+import org.digimead.digi.lib.api.DependencyInjection
 import org.digimead.digi.lib.cache.{ Caching => CCaching }
 import org.digimead.digi.lib.log.api.Loggable
 

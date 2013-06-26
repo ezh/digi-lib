@@ -21,7 +21,7 @@ package org.digimead.digi.lib.log.logger
 import java.util.Date
 
 import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.log.api.Level
 
 /** Base class that absolutely compatible with org.slf4j.Logger */
 class BaseLogger(val loggerName: java.lang.String,
@@ -41,34 +41,34 @@ class BaseLogger(val loggerName: java.lang.String,
   /** Internal class tag for end user processing */
   @volatile var loggerClass: Class[_] = classOf[AnyRef]
   def trace(msg: String): Unit = if (isTraceEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Trace, loggerName,
       loggerClass, msg, None, Logging.inner.record.pid))
   def trace(msg: String, t: Throwable): Unit = if (isTraceEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Trace, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Trace, loggerName,
       loggerClass, msg, Some(t), Logging.inner.record.pid))
   def debug(msg: String): Unit = if (isDebugEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Debug, loggerName,
       loggerClass, msg, None, Logging.inner.record.pid))
   def debug(msg: String, t: Throwable): Unit = if (isDebugEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Debug, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Debug, loggerName,
       loggerClass, msg, Some(t), Logging.inner.record.pid))
   def info(msg: String): Unit = if (isInfoEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Info, loggerName,
       loggerClass, msg, None, Logging.inner.record.pid))
   def info(msg: String, t: Throwable): Unit = if (isInfoEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Info, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Info, loggerName,
       loggerClass, msg, Some(t), Logging.inner.record.pid))
   def warn(msg: String): Unit = if (isWarnEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Warn, loggerName,
       loggerClass, msg, None, Logging.inner.record.pid))
   def warn(msg: String, t: Throwable): Unit = if (isWarnEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Warn, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Warn, loggerName,
       loggerClass, msg, Some(t), Logging.inner.record.pid))
   def error(msg: String): Unit = if (isErrorEnabled)
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Error, loggerName,
       loggerClass, msg, None, Logging.inner.record.pid))
   // always enabled
   def error(msg: String, t: Throwable): Unit =
-    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Record.Level.Error, loggerName,
+    Logging.inner.offer(Logging.inner.record.builder(new Date(), Thread.currentThread.getId, Level.Error, loggerName,
       loggerClass, msg, Some(t), Logging.inner.record.pid))
 }

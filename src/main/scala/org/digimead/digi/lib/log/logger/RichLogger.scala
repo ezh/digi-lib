@@ -20,8 +20,8 @@ package org.digimead.digi.lib.log.logger
 
 import scala.annotation.implicitNotFound
 
-import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Record
+import org.digimead.digi.lib.log.api.Event
+import org.digimead.digi.lib.log.api.Level
 import org.slf4j.Marker
 import org.slf4j.helpers.MessageFormatter
 
@@ -134,7 +134,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def trace(msg: String) = if (isTraceEnabled) {
     base.trace(msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, msg, None))
+    Event.publish(Event.Incoming(this, Level.Trace, msg, None))
   }
   /**
    * Log a message at the TRACE level according to the specified format
@@ -150,7 +150,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def trace(format: String, arg: AnyRef) = if (isTraceEnabled) {
     val ft = MessageFormatter.format(format, arg)
     base.trace(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the TRACE level according to the specified format
@@ -169,7 +169,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def trace(format: String, arguments: AnyRef*): Unit = if (isTraceEnabled) {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.trace(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #trace(String, Object, Object)}
@@ -193,7 +193,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def trace(msg: String, t: Throwable) = if (isTraceEnabled) {
     base.trace(msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Trace, msg, Option(t)))
   }
   /**
    * Similar to {@link #isTraceEnabled()} method except that the
@@ -215,7 +215,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def trace(marker: Marker, msg: String) = if (isTraceEnabled(marker)) {
     base.trace(marker, msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, msg, None))
+    Event.publish(Event.Incoming(this, Level.Trace, msg, None))
   }
   /**
    * This method is similar to {@link #trace(String, Object)} method except that the
@@ -229,7 +229,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def trace(marker: Marker, format: String, arg: AnyRef) = if (isTraceEnabled(marker)) {
     val ft = MessageFormatter.format(format, arg)
     base.trace(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #trace(String, Object...)}
@@ -244,7 +244,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def trace(marker: Marker, format: String, arguments: AnyRef*) = if (isTraceEnabled(marker)) {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.trace(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Trace, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the TRACE level according to the specified format
@@ -272,7 +272,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def trace(marker: Marker, msg: String, t: Throwable) = if (isTraceEnabled(marker)) {
     base.trace(marker, msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Trace, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Trace, msg, Option(t)))
   }
   /** Log a trace message with caller location */
   def traceWhere(msg: String): Unit = if (isTraceEnabled) {
@@ -297,7 +297,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def debug(msg: String) = {
     base.debug(msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, msg, None))
+    Event.publish(Event.Incoming(this, Level.Debug, msg, None))
   }
   /**
    * Log a message at the DEBUG level according to the specified format
@@ -312,7 +312,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def debug(format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.debug(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the DEBUG level according to the specified format
@@ -331,7 +331,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def debug(format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.debug(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #debug(String, Object, Object)}
@@ -354,7 +354,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def debug(msg: String, t: Throwable) = {
     base.debug(msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Debug, msg, Option(t)))
   }
   /**
    * Similar to {@link #isDebugEnabled()} method except that the
@@ -373,7 +373,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def debug(marker: Marker, msg: String) = {
     base.debug(marker, msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, msg, None))
+    Event.publish(Event.Incoming(this, Level.Debug, msg, None))
   }
   /**
    * This method is similar to {@link #debug(String, Object)} method except that the
@@ -386,7 +386,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def debug(marker: Marker, format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.debug(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #debug(String, Object...)}
@@ -400,7 +400,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def debug(marker: Marker, format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.debug(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Debug, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the DEBUG level according to the specified format
@@ -427,7 +427,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def debug(marker: Marker, msg: String, t: Throwable) = {
     base.debug(marker, msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Debug, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Debug, msg, Option(t)))
   }
   /** Log a debug message with the caller location. */
   def debugWhere(msg: String) = debugFuncS(msg)
@@ -448,7 +448,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def info(msg: String) = {
     base.info(msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, msg, None))
+    Event.publish(Event.Incoming(this, Level.Info, msg, None))
   }
   /**
    * Log a message at the INFO level according to the specified format
@@ -463,7 +463,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def info(format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.info(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Info, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the INFO level according to the specified format
@@ -482,7 +482,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def info(format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.info(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Info, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #info(String, Object, Object)}
@@ -505,7 +505,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def info(msg: String, t: Throwable) = {
     base.info(msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Info, msg, Option(t)))
   }
   /**
    * Similar to {@link #isInfoEnabled()} method except that the
@@ -524,7 +524,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def info(marker: Marker, msg: String) = {
     base.info(marker, msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, msg, None))
+    Event.publish(Event.Incoming(this, Level.Info, msg, None))
   }
   /**
    * This method is similar to {@link #info(String, Object)} method except that the
@@ -537,7 +537,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def info(marker: Marker, format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.info(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Info, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #info(String, Object...)}
@@ -551,7 +551,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def info(marker: Marker, format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.info(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Info, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the INFO level according to the specified format
@@ -578,7 +578,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def info(marker: Marker, msg: String, t: Throwable) = {
     base.info(marker, msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Info, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Info, msg, Option(t)))
   }
   /** Log a info message with the caller location. */
   def infoWhere(msg: String) = infoFuncS(msg)
@@ -599,7 +599,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def warn(msg: String) = {
     base.warn(msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, msg, None))
+    Event.publish(Event.Incoming(this, Level.Warn, msg, None))
   }
   /**
    * Log a message at the WARN level according to the specified format
@@ -614,7 +614,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def warn(format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.warn(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the WARN level according to the specified format
@@ -633,7 +633,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def warn(format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.warn(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #warn(String, Object, Object)}
@@ -656,7 +656,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def warn(msg: String, t: Throwable) = {
     base.warn(msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Warn, msg, Option(t)))
   }
   /**
    * Similar to {@link #isWarnEnabled()} method except that the
@@ -675,7 +675,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def warn(marker: Marker, msg: String) = {
     base.warn(marker, msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, msg, None))
+    Event.publish(Event.Incoming(this, Level.Warn, msg, None))
   }
   /**
    * This method is similar to {@link #warn(String, Object)} method except that the
@@ -688,7 +688,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def warn(marker: Marker, format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.warn(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #warn(String, Object...)}
@@ -702,7 +702,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def warn(marker: Marker, format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.warn(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Warn, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the WARN level according to the specified format
@@ -729,7 +729,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def warn(marker: Marker, msg: String, t: Throwable) = {
     base.warn(marker, msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Warn, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Warn, msg, Option(t)))
   }
   /** Log a warn message with the caller location. */
   def warnWhere(msg: String) = warnFuncS(msg)
@@ -750,7 +750,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def error(msg: String) = {
     base.error(msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, msg, None))
+    Event.publish(Event.Incoming(this, Level.Error, msg, None))
   }
   /**
    * Log a message at the ERROR level according to the specified format
@@ -765,7 +765,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def error(format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.error(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Error, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the ERROR level according to the specified format
@@ -784,7 +784,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def error(format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.error(ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Error, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #error(String, Object, Object)}
@@ -807,7 +807,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def error(msg: String, t: Throwable) = {
     base.error(msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Error, msg, Option(t)))
   }
   /**
    * Similar to {@link #isErrorEnabled()} method except that the
@@ -826,7 +826,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def error(marker: Marker, msg: String) = {
     base.error(marker, msg)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, msg, None))
+    Event.publish(Event.Incoming(this, Level.Error, msg, None))
   }
   /**
    * This method is similar to {@link #error(String, Object)} method except that the
@@ -839,7 +839,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def error(marker: Marker, format: String, arg: AnyRef) = {
     val ft = MessageFormatter.format(format, arg)
     base.error(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Error, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * This method is similar to {@link #error(String, Object...)}
@@ -853,7 +853,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   def error(marker: Marker, format: String, arguments: AnyRef*) = {
     val ft = MessageFormatter.arrayFormat(format, arguments.toArray)
     base.error(marker, ft.getMessage(), ft.getThrowable())
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, ft.getMessage(), Option(ft.getThrowable())))
+    Event.publish(Event.Incoming(this, Level.Error, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
    * Log a message at the ERROR level according to the specified format
@@ -880,7 +880,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    */
   def error(marker: Marker, msg: String, t: Throwable) = {
     base.error(marker, msg, t)
-    Logging.Event.publish(Logging.Event.Incoming(this, Record.Level.Error, msg, Option(t)))
+    Event.publish(Event.Incoming(this, Level.Error, msg, Option(t)))
   }
   /** Log a error message with the caller location. */
   def errorWhere(msg: String) = errorFuncS(msg)

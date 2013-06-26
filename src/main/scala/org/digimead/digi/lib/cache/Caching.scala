@@ -23,7 +23,7 @@ import scala.collection.mutable.SynchronizedMap
 import scala.concurrent.duration.DurationInt
 import scala.ref.SoftReference
 
-import org.digimead.digi.lib.DependencyInjection
+import org.digimead.digi.lib.api.DependencyInjection
 import org.digimead.digi.lib.log.api.Loggable
 
 import com.escalatesoft.subcut.inject.BindingModule

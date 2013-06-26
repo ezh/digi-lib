@@ -16,21 +16,14 @@
  * limitations under the License.
  */
 
-package org.digimead.digi.lib.log.appender
+package org.digimead.digi.lib.log.api
 
-import org.digimead.digi.lib.log.api.Appender
-import org.digimead.digi.lib.log.api.Message
+sealed trait Level
 
-object Console extends Appender {
-  protected var f = (records: Array[Message]) => synchronized {
-    records.foreach(r => {
-      System.err.println(r.toString())
-      r.throwable.foreach { t =>
-        System.err.print("\n")
-        t.printStackTrace(System.err)
-      }
-    })
-    System.err.flush()
-  }
-  override def flush() = System.err.flush()
+object Level {
+  case object Trace extends Level
+  case object Debug extends Level
+  case object Info extends Level
+  case object Warn extends Level
+  case object Error extends Level
 }
