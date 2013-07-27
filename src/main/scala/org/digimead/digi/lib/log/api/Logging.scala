@@ -18,24 +18,11 @@
 
 package org.digimead.digi.lib.log.api
 
-import scala.annotation.implicitNotFound
+import org.digimead.digi.lib.log.Logging.Logging2implementation
 
-trait Loggable {
-  @transient
-  implicit lazy val log: RichLogger = try {
-    org.digimead.digi.lib.log.Logging.getLogger(getClass)
-  } catch {
-    // allow to catch real exception cause
-    case e: NoClassDefFoundError =>
-      System.err.println(e)
-      throw new RuntimeException("Unable to get logger for " + getClass.getName, e)
-  }
-}
-
-object Loggable {
-  object Where {
-    val ALL = -1
-    val HERE = -2
-    val BEFORE = -3
-  }
+/**
+ * Public logging functions that is available globally.
+ */
+object Logging {
+  def rotate = org.digimead.digi.lib.log.Logging.rotate()
 }

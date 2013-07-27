@@ -66,20 +66,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val bufferedQueue = new ConcurrentLinkedQueue[api.Message]
   private val bufferedSlice = new Array[api.Message](bufferedFlushLimit)
 
-  def init() {
-    Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass,
-      if (bufferedThread.nonEmpty)
-        s"Initialize logging with buffered slf4j logger and ${this.toString}."
-      else
-        s"Initialize logging with direct slf4j logger and ${this.toString}.")
-    bufferedAppender.foreach {
-      appender =>
-        Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Initialize appender $appender.")
-        appender.init()
-    }
-    bufferedThread.foreach(_.init)
-  }
-
+  /** Deinitialize logging. */
   def deinit() {
     bufferedThread.foreach(_.deinit)
     Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Deinitialize ${this.toString}")
@@ -94,10 +81,7 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
         appender.deinit()
     }
   }
-  def offer(record: api.Message) = bufferedQueue.synchronized {
-    bufferedQueue.offer(record)
-    bufferedQueue.notifyAll
-  }
+  /** Flush buffered appenders. */
   def flush(timeout: Int): Int = synchronized {
     if (bufferedAppender.isEmpty)
       return -1
@@ -105,7 +89,34 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
     bufferedAppender.foreach(_.flush)
     flushed
   }
-  private def flushQueue(timeout: Int): Int = flushQueue(Int.MaxValue, timeout)
+  /** Initialize logging. */
+  def init() {
+    Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass,
+      if (bufferedThread.nonEmpty)
+        s"Initialize logging with buffered slf4j logger and ${this.toString}."
+      else
+        s"Initialize logging with direct slf4j logger and ${this.toString}.")
+    bufferedAppender.foreach {
+      appender =>
+        Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Initialize appender $appender.")
+        appender.init()
+    }
+    bufferedThread.foreach(_.init)
+  }
+  /** Add record to buffered queue. */
+  def offer(record: api.Message) = bufferedQueue.synchronized {
+    bufferedQueue.offer(record)
+    bufferedQueue.notifyAll
+  }
+  /** Rotate log files. */
+  def rotate() {
+    flush(1000) // flush with maximum timeout 1s
+    bufferedAppender.foreach(_.flush)
+    bufferedAppender.foreach(_.deinit)
+    bufferedAppender.foreach(_.init)
+  }
+
+  protected def flushQueue(timeout: Int): Int = flushQueue(Int.MaxValue, timeout)
   @tailrec
   final private[log] def flushQueue(n: Int, timeout: Int, accumulator: Int = 0): Int = {
     var records = 0

@@ -38,6 +38,8 @@ object DependencyInjection {
   /** Current application DI */
   private var di: BindingModule = null
 
+  def apply() = di
+
   /** Provider interface. */
   trait Provider {
     /** Get DI module. */

@@ -20,8 +20,14 @@ package org.digimead.digi.lib.log.api
 
 import scala.collection.mutable.Publisher
 
+/**
+ * Log event base trait.
+ */
 sealed trait Event
 
+/**
+ * Log event publisher.
+ */
 object Event extends Publisher[Event] {
   override protected[log] def publish(event: Event) = try {
     super.publish(event)

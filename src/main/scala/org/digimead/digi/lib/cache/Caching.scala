@@ -45,14 +45,14 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
   private[cache] val map = new HashMap[String, SoftReference[(Long, Any)]]() with SynchronizedMap[String, SoftReference[(Long, Any)]]
   log.debug("Alive.")
 
-  val actor = Caching.actorSystem.actorOf(Props(new Actor()))
+  val actor = Caching.actorSystem.actorOf(Props(new Actor()), Caching.id)
 
   def init() {
     log.debug("Initialize caching with %s.".format(this.toString))
   }
   def deinit() {
     log.debug("Deinitialize %s.".format(this.toString))
-    val stopped = akka.pattern.Patterns.gracefulStop(Caching.inner.actor, 5 seconds, Caching.actorSystem)
+    val stopped = akka.pattern.Patterns.gracefulStop(Caching.inner.actor, 5 seconds)
     scala.concurrent.Await.result(stopped, 5 seconds)
   }
   override def toString() = "default Caching implementation"
@@ -135,6 +135,8 @@ class Caching(implicit val bindingModule: BindingModule) extends Injectable with
 
 object Caching {
   implicit def Caching2implementation(l: Caching.type): Caching = inner
+  /** Actor id. */
+  lazy val id = getClass.getName.dropRight(1)
 
   def actorSystem(): ActorSystem = DI.system
   def inner(): Caching = DI.implementation

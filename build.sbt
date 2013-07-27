@@ -87,7 +87,7 @@ resolvers += "digimead-maven" at "http://storage.googleapis.com/maven.repository
 
 libraryDependencies ++= Seq(
     "com.escalatesoft.subcut" %% "subcut" % "2.0",
-    "com.typesafe.akka" %% "akka-actor" % "2.1.4",
+    "com.typesafe.akka" %% "akka-actor" % "2.2.0",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
     "org.aspectj" % "aspectjrt" % "1.7.2",
     "org.digimead" %% "digi-lib-test" % "0.2.2.4-SNAPSHOT" % "test",

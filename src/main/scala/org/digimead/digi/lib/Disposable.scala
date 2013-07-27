@@ -41,8 +41,8 @@ object Disposable {
     new Marker(new WeakReference(manager))
   }
 
-  /** Clean method that nullify all non primitive fields via reflection. */
-  protected def clean(obj: AnyRef): Unit =
+  /** Clean method that nullify all obj non primitive fields via reflection. */
+  def clean(obj: AnyRef): Unit =
     obj.getClass().getDeclaredFields().foreach(field =>
       if (!field.getType().isPrimitive()) try {
         if (!field.isAccessible())
