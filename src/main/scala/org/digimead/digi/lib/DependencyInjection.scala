@@ -74,23 +74,43 @@ object DependencyInjection extends api.DependencyInjection.Provider {
   def inject() {
     // initialize objects
     injectables.foreach {
-      case (clazz, ref) =>
+      case (className, ref) =>
         ref.get match {
           case Some(pi) =>
             // initialize PersistentInjectable with assert
             assert(pi.bindingModule != null)
           case None =>
             try {
-              val pi = Class.forName(clazz).getField("MODULE$").get(null).asInstanceOf[api.DependencyInjection.PersistentInjectable]
+              val pi = Class.forName(className).getField("MODULE$").get(null).asInstanceOf[api.DependencyInjection.PersistentInjectable]
               // initialize PersistentInjectable with if
               if (pi.bindingModule != null)
-                injectables(clazz) = new WeakReference(pi)
+                injectables(className) = new WeakReference(pi)
             } catch {
               case e: ClassNotFoundException =>
-                val bundle = try { Option(FrameworkUtil.getBundle(getClass)) } catch { case e: Throwable => None }
-                if (bundle.isEmpty) {
-                  System.err.println("DependencyInjection error: " + e)
-                  throw e
+                val dependencyBundle = try {
+                  // Iterate over all bundles. Try to find the required class.
+                  Option(FrameworkUtil.getBundle(getClass)) flatMap { thisBundle =>
+                    thisBundle.getBundleContext().getBundles().find(bundle =>
+                      try { bundle.loadClass(className); true } catch { case e: ClassNotFoundException => false })
+                  }
+                } catch {
+                  case e: Throwable => None
+                }
+                dependencyBundle match {
+                  case Some(dependencyBundle) =>
+                    try {
+                      val pi = dependencyBundle.loadClass(className).getField("MODULE$").get(null).asInstanceOf[api.DependencyInjection.PersistentInjectable]
+                      // initialize PersistentInjectable with if
+                      if (pi.bindingModule != null)
+                        injectables(className) = new WeakReference(pi)
+                    } catch {
+                      case e: Throwable =>
+                        System.err.println("DependencyInjection error: " + e)
+                        throw e
+                    }
+                  case None =>
+                    System.err.println("DependencyInjection error: " + e)
+                    throw e
                 }
               // This situation is on responsibility of library end user.
               // Why? We unable to cross bundle boundary and reach the specific class.
