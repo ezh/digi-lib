@@ -62,12 +62,29 @@ object DependencyInjection extends api.DependencyInjection.Provider {
     this.di = di // prevent for the situation with this.di == null
     inject()
   }
-  def assertLazy[T: Manifest](name: Option[String], module: BindingModule) = Option(module).foreach { m =>
+  /** Assert if value is dynamic (i.e. recreated each time). */
+  def assertDynamic[T: Manifest]()(implicit module: BindingModule): Unit = assertDynamic[T](None, module: BindingModule)
+  /** Assert if value is dynamic (i.e. recreated each time). */
+  def assertDynamic[T: Manifest](name: String)(implicit module: BindingModule): Unit = assertDynamic[T](Some(name), module: BindingModule)
+  /** Assert if value is dynamic (i.e. recreated each time). */
+  def assertDynamic[T: Manifest](name: Option[String], module: BindingModule): Unit = Option(module).foreach { m =>
     val bindingKey = key[T](name)
     assert(m.bindings.isDefinedAt(bindingKey), s"$bindingKey not found")
     val bindingClassName = m.bindings(bindingKey).getClass.getName
-    assert(bindingClassName.endsWith(".LazyModuleInstanceProvider") || bindingClassName.endsWith(".LazyInstanceProvider"),
-      s"Unexpected binding provider for $bindingKey: $bindingClassName. Expect LazyInstanceProvider or LazyModuleInstanceProvider.")
+    if (!bindingClassName.endsWith(".NewBoundInstanceProvider") && !bindingClassName.endsWith(".NewInstanceProvider"))
+      throw new IllegalStateException(s"Unexpected binding provider for $bindingKey: $bindingClassName. Expect NewInstanceProvider or NewBoundInstanceProvider.")
+  }
+  /** Assert if value is lazy (i.e. created on demand). */
+  def assertLazy[T: Manifest]()(implicit module: BindingModule): Unit = assertLazy[T](None, module)
+  /** Assert if value is lazy (i.e. created on demand). */
+  def assertLazy[T: Manifest](name: String)(implicit module: BindingModule): Unit = assertLazy[T](Some(name), module)
+  /** Assert if value is lazy (i.e. created on demand). */
+  def assertLazy[T: Manifest](name: Option[String], module: BindingModule): Unit = Option(module).foreach { m =>
+    val bindingKey = key[T](name)
+    assert(m.bindings.isDefinedAt(bindingKey), s"$bindingKey not found")
+    val bindingClassName = m.bindings(bindingKey).getClass.getName
+    if (!bindingClassName.endsWith(".LazyModuleInstanceProvider") && !bindingClassName.endsWith(".LazyInstanceProvider"))
+      throw new IllegalStateException(s"Unexpected binding provider for $bindingKey: $bindingClassName. Expect LazyInstanceProvider or LazyModuleInstanceProvider.")
   }
   def get(): Option[BindingModule] = synchronized { Option(di) }
   /** Inject DI into persistent objects. */
