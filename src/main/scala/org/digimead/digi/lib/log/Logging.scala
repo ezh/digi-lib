@@ -199,7 +199,8 @@ object Logging {
   /**
    * transform clazz to filename and return logger name
    */
-  def getLogger(clazz: Class[_]): RichLogger = {
+  // Synchronized per class.
+  def getLogger(clazz: Class[_]): RichLogger = clazz.synchronized {
     val stackArray = Thread.currentThread.getStackTrace().dropWhile(_.getClassName != getClass.getName)
     // current class element
     var thisMethodElement: Option[StackTraceElement] = None
