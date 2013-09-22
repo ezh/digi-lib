@@ -41,19 +41,19 @@ class Activator extends BundleActivator with LogListener with ServiceTrackerCust
   def start(context: BundleContext) {
     this.context = Some(context)
     Option(context.getServiceReference(classOf[api.DependencyInjection])).
-      map { currencyServiceRef => (currencyServiceRef, context.getService(currencyServiceRef)) } match {
-        case Some((reference, diService)) =>
+      map { currencyServiceRef ⇒ (currencyServiceRef, context.getService(currencyServiceRef)) } match {
+        case Some((reference, diService)) ⇒
           // DI is already initialized somewhere so logging and caching must be too
           log.debug("Start Digi-Lib. Reinject DI.")
           DependencyInjection.reset()
           DependencyInjection(diService.getDependencyInjection)
-          diService.getDependencyValidator.foreach { validator =>
+          diService.getDependencyValidator.foreach { validator ⇒
             val invalid = DependencyInjection.validate(validator, this)
             if (invalid.nonEmpty)
               throw new IllegalArgumentException("Illegal DI keys found: " + invalid.mkString(","))
           }
           context.ungetService(reference)
-        case None =>
+        case None ⇒
           // DI must be initialized somewhere but we must initialize logging and caching
           log.debug("Start Digi-Lib.")
           val logReaderTracker = new ServiceTracker[LogReaderService, LogReaderService](context, classOf[LogReaderService].getName(), this)
@@ -67,7 +67,7 @@ class Activator extends BundleActivator with LogListener with ServiceTrackerCust
   /** Stop bundle. */
   def stop(context: BundleContext) {
     log.debug("Stop Digi-Lib.")
-    this.logReaderTracker.foreach { tracker =>
+    this.logReaderTracker.foreach { tracker ⇒
       Caching.shutdownHook.foreach(_())
       Caching.deinit()
       Logging.shutdownHook.foreach(_())
@@ -83,19 +83,19 @@ class Activator extends BundleActivator with LogListener with ServiceTrackerCust
     val symbolicName = bundle.getSymbolicName().replaceAll("-", "_")
     val log = Logging.getLogger("osgi.logging." + symbolicName)
     val message = Option(logEntry.getServiceReference()) match {
-      case Some(serviceReference) => logEntry.getMessage() + serviceReference.toString()
-      case None => logEntry.getMessage()
+      case Some(serviceReference) ⇒ logEntry.getMessage() + serviceReference.toString()
+      case None ⇒ logEntry.getMessage()
     }
     logEntry.getLevel() match {
-      case LogService.LOG_DEBUG => log.debug(message, logEntry.getException())
-      case LogService.LOG_INFO => log.info(message, logEntry.getException())
-      case LogService.LOG_WARNING => log.warn(message, logEntry.getException())
-      case LogService.LOG_ERROR => log.error(message, logEntry.getException())
+      case LogService.LOG_DEBUG ⇒ log.debug(message, logEntry.getException())
+      case LogService.LOG_INFO ⇒ log.info(message, logEntry.getException())
+      case LogService.LOG_WARNING ⇒ log.warn(message, logEntry.getException())
+      case LogService.LOG_ERROR ⇒ log.error(message, logEntry.getException())
     }
   }
   /** Subscribe to new LogReaderService */
   def addingService(serviceReference: ServiceReference[LogReaderService]): LogReaderService = {
-    context.map { context =>
+    context.map { context ⇒
       val logReaderService = context.getService(serviceReference)
       log.debug("Subscribe log listener to " + logReaderService.getClass.getName)
       logReaderService.addLogListener(this)
@@ -125,5 +125,11 @@ object Activator extends Loggable {
     Caching.deinit()
     Logging.shutdownHook.foreach(_())
     Logging.deinit()
+    if (!Caching.actorSystem.isTerminated) try {
+      Caching.actorSystem.shutdown()
+      Caching.actorSystem.awaitTermination()
+    } catch {
+      case e: Throwable ⇒
+    }
   }
 }
