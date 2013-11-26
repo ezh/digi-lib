@@ -20,7 +20,7 @@ import sbt.osgi.manager._
 
 AspectJNested ++ OSGiManager // ++ sbt.scct.ScctPlugin.instrumentSettings - ScctPlugin is broken, have no time to fix
 
-name := "Digi-Lib"
+name := "digi-lib"
 
 description := "Base library for Digi components"
 
@@ -46,15 +46,17 @@ inConfig(OSGiConf)({
   )
 })
 
-crossScalaVersions := Seq("2.10.2")
+crossScalaVersions := Seq("2.10.3")
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.3"
 
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature") ++
   (if (true || (System getProperty "java.runtime.version" startsWith "1.7")) Seq() else Seq("-optimize")) // -optimize fails with jdk7
 
 // http://vanillajava.blogspot.ru/2012/02/using-java-7-to-target-much-older-jvms.html
 javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.6", "-target", "1.6")
+
+javacOptions in doc := Seq("-source", "1.6")
 
 if (sys.env.contains("XBOOTCLASSPATH")) Seq(javacOptions += "-Xbootclasspath:" + sys.env("XBOOTCLASSPATH")) else Seq()
 
