@@ -24,11 +24,11 @@ import org.digimead.digi.lib.DependencyInjection
 import org.digimead.digi.lib.log.api.Loggable
 import org.digimead.lib.test.LoggingHelper
 import org.mockito.Mockito
+import org.scalatest.ConfigMap
 import org.scalatest.WordSpec
-import org.scalatest.matchers.Matchers
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class AOPSpec extends WordSpec with LoggingHelper with ShouldMatchers {
+class AOPSpec extends WordSpec with LoggingHelper with Matchers {
   after { adjustLoggingAfter }
   before {
     DependencyInjection(org.digimead.digi.lib.default, false)
@@ -39,7 +39,7 @@ class AOPSpec extends WordSpec with LoggingHelper with ShouldMatchers {
     "process annotated void function" in {
       val test = new LogBasic
       implicit val option = Mockito.times(2)
-      withLogCaptor { test.void(() => {}) } { logCaptor =>
+      withLogCaptor { test.void(() ⇒ {}) } { logCaptor ⇒
         val enter = logCaptor.getAllValues().head
         enter.getLevel() should be(org.apache.log4j.Level.TRACE)
         enter.getMessage.toString should endWith(" enteringMethod LogBasic::void")
@@ -51,7 +51,7 @@ class AOPSpec extends WordSpec with LoggingHelper with ShouldMatchers {
     "process annotated non void function" in {
       val test = new LogBasic
       implicit val option = Mockito.times(2)
-      withLogCaptor { test.nonVoid(() => 1) } { logCaptor =>
+      withLogCaptor { test.nonVoid(() ⇒ 1) } { logCaptor ⇒
         val enter = logCaptor.getAllValues().head
         enter.getLevel() should be(org.apache.log4j.Level.TRACE)
         enter.getMessage.toString should endWith(" enteringMethod LogBasic::nonVoid")
@@ -65,11 +65,11 @@ class AOPSpec extends WordSpec with LoggingHelper with ShouldMatchers {
       implicit val option = Mockito.times(2)
       withLogCaptor {
         try {
-          test.void(() => throw new RuntimeException("test"))
+          test.void(() ⇒ throw new RuntimeException("test"))
         } catch {
-          case e: RuntimeException =>
+          case e: RuntimeException ⇒
         }
-      } { logCaptor =>
+      } { logCaptor ⇒
         val enter = logCaptor.getAllValues().head
         enter.getLevel() should be(org.apache.log4j.Level.TRACE)
         enter.getMessage.toString should endWith(" enteringMethod LogBasic::void")
@@ -83,7 +83,7 @@ class AOPSpec extends WordSpec with LoggingHelper with ShouldMatchers {
     "process annotated function" in {
       val test = new CacheBasic
       implicit val option = Mockito.times(4)
-      withLogCaptor { test.cached(() => Option(2)) } { logCaptor =>
+      withLogCaptor { test.cached(() ⇒ Option(2)) } { logCaptor ⇒
         val _1st = logCaptor.getAllValues()(0)
         _1st.getLevel() should be(org.apache.log4j.Level.DEBUG)
         _1st.getMessage.toString should be("Alive.")
@@ -100,19 +100,19 @@ class AOPSpec extends WordSpec with LoggingHelper with ShouldMatchers {
     }
   }
 
-  override def beforeAll(configMap: Map[String, Any]) { adjustLoggingBeforeAll(configMap) }
+  override def beforeAll(configMap: ConfigMap) { adjustLoggingBeforeAll(configMap) }
 
   /** Stub class for @log annotation testing. */
   class LogBasic extends Loggable {
     @log
-    def void[T](f: () => T) { f() }
+    def void[T](f: () ⇒ T) { f() }
     @log
-    def nonVoid[T](f: () => T) = f()
+    def nonVoid[T](f: () ⇒ T) = f()
   }
   /** Stub class for @cache annotation testing. */
   class CacheBasic extends Loggable {
     @cache
-    def cached[T](f: () => T) = f()
+    def cached[T](f: () ⇒ T) = f()
   }
 }
 

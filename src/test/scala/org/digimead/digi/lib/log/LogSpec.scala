@@ -19,15 +19,18 @@
 package org.digimead.digi.lib.log
 
 import scala.annotation.implicitNotFound
+
+import com.escalatesoft.subcut.inject.NewBindingModule
+
 import org.digimead.digi.lib.DependencyInjection
+import org.digimead.digi.lib.log.api.Loggable
 import org.digimead.digi.lib.log.logger.RichLogger
+import org.digimead.lib.test.LoggingHelper
+import org.scalatest.ConfigMap
 import org.scalatest.FunSpec
 import org.scalatest.PrivateMethodTester
-import org.scalatest.matchers.ShouldMatchers
-import com.escalatesoft.subcut.inject.NewBindingModule
-import org.digimead.digi.lib.log.api.Loggable
 import org.scalatest.WordSpec
-import org.digimead.lib.test.LoggingHelper
+import org.scalatest.Matchers
 
 class LogSpec000 extends LogSpec.Base {
   "A Log Singleton" should {
@@ -42,9 +45,9 @@ class LogSpec000 extends LogSpec.Base {
       logging1.record should be theSameInstanceAs (logging2.record)
       logging1.record.dateFormat should be theSameInstanceAs (logging2.record.dateFormat)
       logging1 should be theSameInstanceAs (config.inject[Logging](None))
-      logging1.builder should not be theSameInstanceAs(config.inject[(String, Class[_]) => api.RichLogger](Some("Log.Builder")))
+      logging1.builder should not be theSameInstanceAs(config.inject[(String, Class[_]) ⇒ api.RichLogger](Some("Log.Builder")))
 
-      DependencyInjection(config ~ (NewBindingModule.newBindingModule(module => {})), false)
+      DependencyInjection(config ~ (NewBindingModule.newBindingModule(module ⇒ {})), false)
       val logging3 = Logging inner ()
       logging1 should be theSameInstanceAs (logging3)
       logging2 should be theSameInstanceAs (logging3)
@@ -65,7 +68,7 @@ class LogSpec001 extends LogSpec.Base {
       instance.bufferedFlushLimit should be(1000)
       instance.shutdownHook should be(None)
       instance.bufferedAppender should be('empty)
-      instance.richLogger.size should not be ('empty)
+      instance.richLogger should be ('empty)
       instance.commonLogger should not be (null)
 
       class Test extends Loggable {
@@ -73,6 +76,7 @@ class LogSpec001 extends LogSpec.Base {
       }
       val test = new Test
       test.log.___glance("start")
+      instance.richLogger should not be ('empty)
       test.log.isInstanceOf[RichLogger] should be(true)
       test.log.base.isInstanceOf[org.slf4j.impl.Log4jLoggerAdapter] should be(true)
     }
@@ -83,7 +87,7 @@ class LogSpec002 extends LogSpec.Base {
   "A Log Singleton" should {
     "create instance with custom parameters" in {
       val config1 = org.digimead.digi.lib.log.default ~ org.digimead.digi.lib.default
-      val config2 = new NewBindingModule(module => {
+      val config2 = new NewBindingModule(module ⇒ {
         module.bind[Boolean] identifiedBy "Log.TraceWhereEnabled" toSingle { true }
       })
       val config = config2 ~ config1
@@ -96,10 +100,10 @@ class LogSpec002 extends LogSpec.Base {
 }
 
 object LogSpec {
-  trait Base extends WordSpec with LoggingHelper with ShouldMatchers {
+  trait Base extends WordSpec with LoggingHelper with Matchers {
     after { adjustLoggingAfter }
     before { adjustLoggingBefore }
 
-    override def beforeAll(configMap: Map[String, Any]) { adjustLoggingBeforeAll(configMap) }
+    override def beforeAll(configMap: ConfigMap) { adjustLoggingBeforeAll(configMap) }
   }
 }

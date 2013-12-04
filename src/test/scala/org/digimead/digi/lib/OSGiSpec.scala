@@ -25,12 +25,13 @@ import org.digimead.lib.test.LoggingHelper
 import org.digimead.lib.test.OSGiHelper
 import org.mockito.Mockito
 import org.osgi.service.log.LogService
+import org.scalatest.ConfigMap
 import org.scalatest.WordSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.mock.MockitoSugar
 import org.slf4j.LoggerFactory
 
-class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with ShouldMatchers with MockitoSugar with Loggable {
+class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with Matchers with MockitoSugar with Loggable {
   val testBundleClass = org.digimead.digi.lib.default.getClass()
 
   after {
@@ -41,6 +42,7 @@ class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with ShouldMa
     DependencyInjection(org.digimead.digi.lib.default, false)
     adjustLoggingBefore
     adjustOSGiBefore
+    osgiRegistry.foreach(_.start())
   }
 
   "OSGi framework" must {
@@ -125,5 +127,5 @@ class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with ShouldMa
     }
   }
 
-  override def beforeAll(configMap: Map[String, Any]) { adjustLoggingBeforeAll(configMap) }
+  override def beforeAll(configMap: ConfigMap) { adjustLoggingBeforeAll(configMap) }
 }
