@@ -80,8 +80,9 @@ class Activator extends BundleActivator with LogListener with ServiceTrackerCust
   /** Transfer logEntry to log. */
   def logged(logEntry: LogEntry) {
     val bundle = logEntry.getBundle()
-    val symbolicName = bundle.getSymbolicName().replaceAll("-", "_")
-    val log = Logging.getLogger("osgi.logging." + symbolicName)
+    val symbolicName = bundle.getSymbolicName()
+    val log = Logging.getLogger("osgi.logging." + // Yes, sometimes symbolicName is null
+      (if (symbolicName != null) symbolicName.replaceAll("-", "_") else s"Bundle[${bundle.getBundleId()}]"))
     val message = Option(logEntry.getServiceReference()) match {
       case Some(serviceReference) ⇒ logEntry.getMessage() + serviceReference.toString()
       case None ⇒ logEntry.getMessage()

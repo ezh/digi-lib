@@ -69,13 +69,13 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   /** Deinitialize logging. */
   def deinit() {
     bufferedThread.foreach(_.deinit)
-    Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Deinitialize ${this.toString}")
+    Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Deinitialize ${this.toString}.")
     flush(0)
     bufferedQueue.clear()
     bufferedQueue.synchronized { bufferedQueue.notifyAll() }
     bufferedAppender.foreach {
       appender =>
-        Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Deinitialize appender ${appender}")
+        Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Deinitialize appender ${appender}.")
         flush(0)
         appender.flush()
         appender.deinit()

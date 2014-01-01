@@ -9,6 +9,6 @@ Central module of all Digi applications and libraries, containing core services 
 
 <hr/>
 
-> [Latest stable version $version$]($stable$)
+> [Latest stable version - UNKNOWN]($stable$)
 
-> [Latest development version $version$]($development$)
+> [Latest development version - UNKNOWN]($development$)
