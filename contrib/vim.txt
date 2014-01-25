@@ -5,17 +5,27 @@
 
 set fml=0
 
+function! s:NCompare(i1, i2)
+  return a:i1 == a:i2 ? 0 : a:i1 > a:i2 ? 1 : -1
+endfunc
+
 function! s:FoldOthers(list)
   setlocal foldmethod=manual
   normal! zE
   let from = 0
   let to = 0
+  let lines = []
   for line in a:list
-    if line.lnum != from
-      execute from.','.(line.lnum-1).'fold'
-    endif
-    let from = line.lnum + 1
+    call add(lines, line.lnum)
   endfor
+  call sort(lines, "s:NCompare")
+  for l in lines
+    if l != from
+      execute from.','.(l-1).'fold'
+    endif
+    let from = l + 1
+  endfor
+  execute from.','.line('$').'fold'
 endfunction
 
 command! -bar FoldOthers call s:FoldOthers(getqflist())
