@@ -1,0 +1,21 @@
+" add to .vimrc
+" fold all lines that are not in quickfix
+" :vimgrep TRACE %
+" :FoldOthers
+
+set fml=0
+
+function! s:FoldOthers(list)
+  setlocal foldmethod=manual
+  normal! zE
+  let from = 0
+  let to = 0
+  for line in a:list
+    if line.lnum != from
+      execute from.','.(line.lnum-1).'fold'
+    endif
+    let from = line.lnum + 1
+  endfor
+endfunction
+
+command! -bar FoldOthers call s:FoldOthers(getqflist())
