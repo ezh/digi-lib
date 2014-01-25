@@ -20,12 +20,17 @@ function! s:FoldOthers(list)
   endfor
   call sort(lines, "s:NCompare")
   for l in lines
-    if l != from
-      execute from.','.(l-1).'fold'
+    if l >= from
+      if l != from
+        execute from.','.(l-1).'fold'
+      endif
+      let from = l + 1
     endif
-    let from = l + 1
   endfor
-  execute from.','.line('$').'fold'
+  echo line('$')
+  if line('$') > from
+    execute from.','.line('$').'fold'
+  endif
 endfunction
 
 command! -bar FoldOthers call s:FoldOthers(getqflist())
