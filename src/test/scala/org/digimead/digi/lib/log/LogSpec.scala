@@ -101,9 +101,6 @@ class LogSpec002 extends LogSpec.Base {
 
 object LogSpec {
   trait Base extends WordSpec with LoggingHelper with Matchers {
-    after { adjustLoggingAfter }
-    before { adjustLoggingBefore }
-
     override def beforeAll(configMap: ConfigMap) { adjustLoggingBeforeAll(configMap) }
   }
 }

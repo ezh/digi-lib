@@ -78,9 +78,6 @@ class CacheSpec002 extends CacheSpec.Base {
 
 object CacheSpec {
   trait Base extends WordSpec with LoggingHelper with Matchers {
-    after { adjustLoggingAfter }
-    before { adjustLoggingBefore }
-
     override def beforeAll(configMap: ConfigMap) { adjustLoggingBeforeAll(configMap) }
   }
 }

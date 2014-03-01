@@ -36,11 +36,9 @@ class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with Matchers
 
   after {
     adjustOSGiAfter
-    adjustLoggingAfter
   }
   before {
     DependencyInjection(org.digimead.digi.lib.default, false)
-    adjustLoggingBefore
     adjustOSGiBefore
     osgiRegistry.foreach(_.start())
   }
@@ -84,7 +82,7 @@ class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with Matchers
       } yield {
         digiLib.stop() // PojoSR is always starts bundles
         implicit val option = Mockito.atLeastOnce()
-        withLogCaptor {
+        withMockitoLogCaptor {
           digiLib.start()
         } { logCaptor =>
           logCaptor.getAllValues() find { entry =>
@@ -92,7 +90,7 @@ class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with Matchers
               entry.getLevel() == org.apache.log4j.Level.DEBUG
           } getOrElse { fail("Log message 'Start Digi-Lib.' at level DEBUG not found.") }
         }
-        withLogCaptor {
+        withMockitoLogCaptor {
           digiLib.stop()
         } { logCaptor =>
           logCaptor.getAllValues() find { entry =>
@@ -115,7 +113,7 @@ class OSGiSpec extends WordSpec with LoggingHelper with OSGiHelper with Matchers
         logService should not be (null)
         // multi threaded with org.apache.felix.log
         implicit val option = Mockito.timeout(1000)
-        withLogCaptor {
+        withMockitoLogCaptor {
           logService.log(LogService.LOG_INFO, "Test LogService from OSGiTest.")
         } { logCaptor =>
           logCaptor.getValue().getLevel() should be(org.apache.log4j.Level.INFO)

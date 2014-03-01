@@ -1,6 +1,7 @@
 " add to .vimrc
 " fold all lines that are not in quickfix
 " :vimgrep TRACE %
+" :vimgrep /\v\C(DEBUG|TRACE)/ %
 " :FoldOthers
 
 set fml=0

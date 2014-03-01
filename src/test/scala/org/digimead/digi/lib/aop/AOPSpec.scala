@@ -29,17 +29,13 @@ import org.scalatest.WordSpec
 import org.scalatest.Matchers
 
 class AOPSpec extends WordSpec with LoggingHelper with Matchers {
-  after { adjustLoggingAfter }
-  before {
-    DependencyInjection(org.digimead.digi.lib.default, false)
-    adjustLoggingBefore
-  }
+  before { DependencyInjection(org.digimead.digi.lib.default, false) }
 
   "A logging subsystem" should {
     "process annotated void function" in {
       val test = new LogBasic
       implicit val option = Mockito.times(2)
-      withLogCaptor { test.void(() ⇒ {}) } { logCaptor ⇒
+      withMockitoLogCaptor { test.void(() ⇒ {}) } { logCaptor ⇒
         val enter = logCaptor.getAllValues().head
         enter.getLevel() should be(org.apache.log4j.Level.TRACE)
         enter.getMessage.toString should endWith(" enteringMethod LogBasic::void")
@@ -51,7 +47,7 @@ class AOPSpec extends WordSpec with LoggingHelper with Matchers {
     "process annotated non void function" in {
       val test = new LogBasic
       implicit val option = Mockito.times(2)
-      withLogCaptor { test.nonVoid(() ⇒ 1) } { logCaptor ⇒
+      withMockitoLogCaptor { test.nonVoid(() ⇒ 1) } { logCaptor ⇒
         val enter = logCaptor.getAllValues().head
         enter.getLevel() should be(org.apache.log4j.Level.TRACE)
         enter.getMessage.toString should endWith(" enteringMethod LogBasic::nonVoid")
@@ -63,7 +59,7 @@ class AOPSpec extends WordSpec with LoggingHelper with Matchers {
     "process exception in annotated function" in {
       val test = new LogBasic
       implicit val option = Mockito.times(2)
-      withLogCaptor {
+      withMockitoLogCaptor {
         try {
           test.void(() ⇒ throw new RuntimeException("test"))
         } catch {
@@ -83,7 +79,7 @@ class AOPSpec extends WordSpec with LoggingHelper with Matchers {
     "process annotated function" in {
       val test = new CacheBasic
       implicit val option = Mockito.times(4)
-      withLogCaptor { test.cached(() ⇒ Option(2)) } { logCaptor ⇒
+      withMockitoLogCaptor { test.cached(() ⇒ Option(2)) } { logCaptor ⇒
         val _1st = logCaptor.getAllValues()(0)
         _1st.getLevel() should be(org.apache.log4j.Level.DEBUG)
         _1st.getMessage.toString should be("Alive.")
