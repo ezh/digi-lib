@@ -56,7 +56,7 @@ abstract class Caching extends Loggable {
     } else
       longSignature.hashCode() + " " + args.map(_.hashCode()).mkString(" ")
     log.trace(shortSignature + " with namespace id " + annotation.namespace)
-    if (instance == null || instance.actor.isTerminated)
+    if (instance == null)
       return invokeOriginal(invoker, key, annotation.namespace())
     implicit val timeout = instance.requestTimeout
     val future = instance.actor ? CCaching.Message.GetByID(annotation.namespace(), key, annotation.period())
@@ -73,10 +73,6 @@ abstract class Caching extends Loggable {
     val instance = Caching.DI.implementation
     if (instance == null) {
       log.trace("caching is not initialized, invoking original method")
-      return invoker.invoke()
-    }
-    if (instance.actor.isTerminated) {
-      log.trace("actor " + instance.actor + " is terminated, invoking original method")
       return invoker.invoke()
     }
     // all cases except "Option" and "Traversable" must throw scala.MatchError

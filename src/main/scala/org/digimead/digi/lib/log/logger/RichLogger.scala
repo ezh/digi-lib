@@ -32,87 +32,92 @@ import language.reflectiveCalls
 class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: Boolean) extends org.digimead.digi.lib.log.api.RichLogger {
   assert(base != null, "Base logger must not be null.")
 
-  protected lazy val traceFuncS: (String => Unit) = (isTraceEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String) => logWhere(msg, trace, trace)(-2)
-    case (true, false) => (msg: String) => trace(msg)
-    case (false, _) => (msg: String) => {}
+  protected lazy val traceFuncS: (String ⇒ Unit) = (isTraceEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String) ⇒ logWhere(msg, trace, trace)(-2)
+    case (true, false) ⇒ (msg: String) ⇒ trace(msg)
+    case (false, _) ⇒ (msg: String) ⇒ {}
   }
-  protected lazy val traceFuncSI: ((String, Int) => Unit) = (isTraceEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, trace, trace)(stackLine)
-    case (true, false) => (msg: String, stackLine: Int) => trace(msg)
-    case (false, _) => (msg: String, stackLine: Int) => {}
-  }
-
-  protected lazy val debugFuncS: (String => Unit) = (isDebugEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String) => logWhere(msg, debug, debug)(-2)
-    case (true, false) => (msg: String) => debug(msg)
-    case (false, _) => (msg: String) => {}
-  }
-  protected lazy val debugFuncSI: ((String, Int) => Unit) = (isDebugEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, debug, debug)(stackLine)
-    case (true, false) => (msg: String, stackLine: Int) => debug(msg)
-    case (false, _) => (msg: String, stackLine: Int) => {}
+  protected lazy val traceFuncSI: ((String, Int) ⇒ Unit) = (isTraceEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String, stackLine: Int) ⇒ logWhere(msg, trace, trace)(stackLine)
+    case (true, false) ⇒ (msg: String, stackLine: Int) ⇒ trace(msg)
+    case (false, _) ⇒ (msg: String, stackLine: Int) ⇒ {}
   }
 
-  protected lazy val infoFuncS: (String => Unit) = (isInfoEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String) => logWhere(msg, info, info)(-2)
-    case (true, false) => (msg: String) => info(msg)
-    case (false, _) => (msg: String) => {}
+  protected lazy val debugFuncS: (String ⇒ Unit) = (isDebugEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String) ⇒ logWhere(msg, debug, debug)(-2)
+    case (true, false) ⇒ (msg: String) ⇒ debug(msg)
+    case (false, _) ⇒ (msg: String) ⇒ {}
   }
-  protected lazy val infoFuncSI: ((String, Int) => Unit) = (isInfoEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, info, info)(stackLine)
-    case (true, false) => (msg: String, stackLine: Int) => info(msg)
-    case (false, _) => (msg: String, stackLine: Int) => {}
+  protected lazy val debugFuncSI: ((String, Int) ⇒ Unit) = (isDebugEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String, stackLine: Int) ⇒ logWhere(msg, debug, debug)(stackLine)
+    case (true, false) ⇒ (msg: String, stackLine: Int) ⇒ debug(msg)
+    case (false, _) ⇒ (msg: String, stackLine: Int) ⇒ {}
   }
 
-  protected lazy val warnFuncS: (String => Unit) = (base.isTraceEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String) => logWhere(msg, base.warn, base.warn)(-2)
-    case (true, false) => (msg: String) => {
+  protected lazy val infoFuncS: (String ⇒ Unit) = (isInfoEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String) ⇒ logWhere(msg, info, info)(-2)
+    case (true, false) ⇒ (msg: String) ⇒ info(msg)
+    case (false, _) ⇒ (msg: String) ⇒ {}
+  }
+  protected lazy val infoFuncSI: ((String, Int) ⇒ Unit) = (isInfoEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String, stackLine: Int) ⇒ logWhere(msg, info, info)(stackLine)
+    case (true, false) ⇒ (msg: String, stackLine: Int) ⇒ info(msg)
+    case (false, _) ⇒ (msg: String, stackLine: Int) ⇒ {}
+  }
+
+  protected lazy val warnFuncS: (String ⇒ Unit) = (base.isTraceEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String) ⇒ logWhere(msg, base.warn, base.warn)(-2)
+    case (true, false) ⇒ (msg: String) ⇒ {
       base.warn(msg)
     }
-    case (false, _) => (msg: String) => {}
+    case (false, _) ⇒ (msg: String) ⇒ {}
   }
-  protected lazy val warnFuncSI: ((String, Int) => Unit) = (base.isTraceEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, base.warn, base.warn)(stackLine)
-    case (true, false) => (msg: String, stackLine: Int) => {
+  protected lazy val warnFuncSI: ((String, Int) ⇒ Unit) = (base.isTraceEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String, stackLine: Int) ⇒ logWhere(msg, base.warn, base.warn)(stackLine)
+    case (true, false) ⇒ (msg: String, stackLine: Int) ⇒ {
       base.warn(msg)
     }
-    case (false, _) => (msg: String, stackLine: Int) => {}
+    case (false, _) ⇒ (msg: String, stackLine: Int) ⇒ {}
   }
 
-  protected lazy val errorFuncS: (String => Unit) = (base.isTraceEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String) => logWhere(msg, base.error, base.error)(-2)
-    case (true, false) => (msg: String) => {
+  protected lazy val errorFuncS: (String ⇒ Unit) = (base.isTraceEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String) ⇒ logWhere(msg, base.error, base.error)(-2)
+    case (true, false) ⇒ (msg: String) ⇒ {
       base.error(msg)
     }
-    case (false, _) => (msg: String) => {}
+    case (false, _) ⇒ (msg: String) ⇒ {}
   }
-  protected lazy val errorFuncSI: ((String, Int) => Unit) = (base.isTraceEnabled, isWhereEnabled) match {
-    case (true, true) => (msg: String, stackLine: Int) => logWhere(msg, base.error, base.error)(stackLine)
-    case (true, false) => (msg: String, stackLine: Int) => {
+  protected lazy val errorFuncSI: ((String, Int) ⇒ Unit) = (base.isTraceEnabled, isWhereEnabled) match {
+    case (true, true) ⇒ (msg: String, stackLine: Int) ⇒ logWhere(msg, base.error, base.error)(stackLine)
+    case (true, false) ⇒ (msg: String, stackLine: Int) ⇒ {
       base.error(msg)
     }
-    case (false, _) => (msg: String, stackLine: Int) => {}
+    case (false, _) ⇒ (msg: String, stackLine: Int) ⇒ {}
   }
-  // fast look while development, highlight it in your IDE
+  /** Fast look while development, highlight it in your IDE */
   def ___gaze(msg: String) {
     val t = new Throwable(msg)
     t.fillInStackTrace()
     base.error("<<< " + msg + " >>>\n" + t.getStackTraceString)
   }
-  // fast look while development, highlight it in your IDE
+  /** Fast look while development, highlight it in your IDE */
   def ___glance(msg: String) {
     val t = new Throwable(msg)
     t.fillInStackTrace()
     base.error("<<< " + msg + " >>>")
   }
-  // error with stack trace
+  /** Error with stack trace. */
   def fatal(msg: String) {
     val t = new Throwable(msg)
     t.fillInStackTrace()
     base.error(msg, t)
   }
-
+  /** Error with stack trace and external exception. */
+  def fatal(msg: String, tExt: Throwable) {
+    val t = new Throwable(msg, tExt)
+    t.fillInStackTrace()
+    base.error(msg, t)
+  }
   /**
    * Return the name of this <code>Logger</code> instance.
    * @return name of this logger instance
@@ -887,7 +892,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
   /** Log a error message with the specific caller location. */
   def errorWhere(msg: String, stackLine: Int) = errorFuncSI(msg, stackLine)
 
-  protected def logWhere(msg: String, f1: (String, Throwable) => Unit, f2: (String => Unit))(stackLine: Int) {
+  protected def logWhere(msg: String, f1: (String, Throwable) ⇒ Unit, f2: (String ⇒ Unit))(stackLine: Int) {
     val t = new Throwable(msg)
     t.fillInStackTrace()
     if (stackLine == -1) { // ALL

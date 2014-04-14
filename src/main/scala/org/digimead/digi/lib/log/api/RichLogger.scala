@@ -43,6 +43,8 @@ trait RichLogger extends org.slf4j.Logger {
   def ___glance(msg: String)
   /** error with stack trace */
   def fatal(msg: String)
+  /** error with stack trace and external exception */
+  def fatal(msg: String, t: Throwable)
 
   /**
    * Return the name of this <code>Logger</code> instance.

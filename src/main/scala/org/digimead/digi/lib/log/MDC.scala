@@ -30,8 +30,8 @@ class MDC extends MDCAdapter {
   def get(key: String): String = MDC.get(key)
   def put(key: String, value: String) = MDC.put(key, value)
   def remove(key: String) = MDC.remove(key)
-  def getCopyOfContextMap(): java.util.Map[_, _] = MDC.getCopyOfContextMap
-  def setContextMap(contextMap: java.util.Map[_, _]) = MDC.setContextMap(contextMap)
+  def getCopyOfContextMap(): java.util.Map[String, String] = MDC.getCopyOfContextMap
+  def setContextMap(contextMap: java.util.Map[String, String]) = MDC.setContextMap(contextMap)
 }
 
 object MDC extends MDCAdapter {
@@ -43,8 +43,8 @@ object MDC extends MDCAdapter {
   def get(key: String): String = adapter.get(key).getOrElse(null)
   def put(key: String, value: String) = adapter(key) = value
   def remove(key: String) = adapter.remove(key)
-  def getCopyOfContextMap(): java.util.Map[_, _] = tl2hash(adapter)
-  def setContextMap(contextMap: java.util.Map[_, _]) {
+  def getCopyOfContextMap(): java.util.Map[String, String] = tl2hash(adapter)
+  def setContextMap(contextMap: java.util.Map[String, String]) {
     clear
     contextMap.keySet().foreach {
       key =>
