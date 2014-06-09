@@ -91,7 +91,7 @@ libraryDependencies ++= Seq(
     "com.escalatesoft.subcut" %% "subcut" % "2.0",
     "com.typesafe.akka" %% "akka-actor" % "2.3.2",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
-    "org.aspectj" % "aspectjrt" % "1.7.4",
+    "org.aspectj" % "aspectjrt" % "1.8.0",
     "org.digimead" %% "digi-lib-test" % "0.2.2.5-SNAPSHOT" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
