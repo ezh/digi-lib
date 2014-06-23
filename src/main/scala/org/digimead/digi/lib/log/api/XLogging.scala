@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,9 @@
 
 package org.digimead.digi.lib.log.api
 
-import java.util.Date
-
-trait Message {
-  val date: Date
-  val tid: Long
-  val level: Level
-  val tag: String
-  val tagClass: Class[_]
-  val message: String
-  val throwable: Option[Throwable]
-  val pid: Int
-}
-
-object Message {
-  type MessageBuilder = (Date, Long, Level, String, Class[_], String, Option[Throwable], Int) => Message
+/**
+ * Public logging functions that is available globally.
+ */
+object XLogging {
+  def rotate = org.digimead.digi.lib.log.Logging.rotate()
 }

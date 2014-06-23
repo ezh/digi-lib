@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,24 @@
 
 package org.digimead.digi.lib.log.api
 
-import org.digimead.digi.lib.log.Logging.Logging2implementation
+import scala.annotation.implicitNotFound
 
-/**
- * Public logging functions that is available globally.
- */
-object Logging {
-  def rotate = org.digimead.digi.lib.log.Logging.rotate()
+trait XLoggable {
+  @transient
+  implicit lazy val log: XRichLogger = try {
+    org.digimead.digi.lib.log.Logging.getLogger(getClass)
+  } catch {
+    // allow to catch real exception cause
+    case e: NoClassDefFoundError =>
+      System.err.println(e)
+      throw new RuntimeException("Unable to get logger for " + getClass.getName, e)
+  }
+}
+
+object XLoggable {
+  object Where {
+    val ALL = -1
+    val HERE = -2
+    val BEFORE = -3
+  }
 }

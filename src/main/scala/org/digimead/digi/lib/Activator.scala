@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2013-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,22 @@
 
 package org.digimead.digi.lib
 
+import org.digimead.digi.lib.api.XDependencyInjection
 import org.digimead.digi.lib.cache.Caching
-import org.digimead.digi.lib.cache.Caching.Caching2implementation
 import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.Logging.Logging2implementation
-import org.digimead.digi.lib.log.api.Loggable
-import org.osgi.framework.BundleActivator
-import org.osgi.framework.BundleContext
-import org.osgi.framework.ServiceReference
-import org.osgi.service.log.LogEntry
-import org.osgi.service.log.LogListener
-import org.osgi.service.log.LogReaderService
-import org.osgi.service.log.LogService
-import org.osgi.util.tracker.ServiceTracker
-import org.osgi.util.tracker.ServiceTrackerCustomizer
+import org.digimead.digi.lib.log.api.XLoggable
+import org.osgi.framework.{ BundleActivator, BundleContext, ServiceReference }
+import org.osgi.service.log.{ LogEntry, LogListener, LogReaderService, LogService }
+import org.osgi.util.tracker.{ ServiceTracker, ServiceTrackerCustomizer }
 
-class Activator extends BundleActivator with LogListener with ServiceTrackerCustomizer[LogReaderService, LogReaderService] with Loggable {
+class Activator extends BundleActivator with LogListener with ServiceTrackerCustomizer[LogReaderService, LogReaderService] with XLoggable {
   @volatile protected var context: Option[BundleContext] = None
   @volatile protected var logReaderTracker: Option[ServiceTracker[LogReaderService, LogReaderService]] = None
 
   /** Start bundle. */
   def start(context: BundleContext) {
     this.context = Some(context)
-    Option(context.getServiceReference(classOf[api.DependencyInjection])).
+    Option(context.getServiceReference(classOf[api.XDependencyInjection])).
       map { currencyServiceRef ⇒ (currencyServiceRef, context.getService(currencyServiceRef)) } match {
         case Some((reference, diService)) ⇒
           // DI is already initialized somewhere so logging and caching must be too
@@ -111,7 +104,7 @@ class Activator extends BundleActivator with LogListener with ServiceTrackerCust
   }
 }
 
-object Activator extends Loggable {
+object Activator extends XLoggable {
   /** Non OSGi start. */
   def start() {
     //org.digimead.digi.lib.DependencyInjection(org.digimead.digi.lib.default)

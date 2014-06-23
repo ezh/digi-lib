@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,12 @@
 
 package org.digimead.digi.lib.aop
 
-import scala.collection.JavaConversions._
-
 import org.digimead.digi.lib.DependencyInjection
-import org.digimead.digi.lib.log.api.Loggable
+import org.digimead.digi.lib.log.api.XLoggable
 import org.digimead.lib.test.LoggingHelper
 import org.mockito.Mockito
-import org.scalatest.ConfigMap
-import org.scalatest.WordSpec
-import org.scalatest.Matchers
+import org.scalatest.{ ConfigMap, Matchers, WordSpec }
+import scala.collection.JavaConversions.asScalaBuffer
 
 class AOPSpec extends WordSpec with LoggingHelper with Matchers {
   before { DependencyInjection(org.digimead.digi.lib.default, false) }
@@ -99,14 +96,14 @@ class AOPSpec extends WordSpec with LoggingHelper with Matchers {
   override def beforeAll(configMap: ConfigMap) { adjustLoggingBeforeAll(configMap) }
 
   /** Stub class for @log annotation testing. */
-  class LogBasic extends Loggable {
+  class LogBasic extends XLoggable {
     @log
     def void[T](f: () ⇒ T) { f() }
     @log
     def nonVoid[T](f: () ⇒ T) = f()
   }
   /** Stub class for @cache annotation testing. */
-  class CacheBasic extends Loggable {
+  class CacheBasic extends XLoggable {
     @cache
     def cached[T](f: () ⇒ T) = f()
   }

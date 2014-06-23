@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
 
 package org.digimead.digi.lib.log.api
 
-sealed trait Level
-
-object Level {
-  case object Trace extends Level
-  case object Debug extends Level
-  case object Info extends Level
-  case object Warn extends Level
-  case object Error extends Level
+trait XAppender {
+  protected var f: (Array[XMessage]) => Unit
+  def init() {}
+  def apply(r: Array[XMessage]) = f(r)
+  def deinit() {}
+  def flush() {}
+  def getF() = synchronized { f }
+  def setF(_f: (Array[XMessage]) => Unit) = synchronized { f = _f }
 }

@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@
 
 package org.digimead.digi.lib.cache
 
+import org.digimead.digi.lib.log.api.XLoggable
+import scala.language.postfixOps
 import scala.ref.SoftReference
 
-import org.digimead.digi.lib.log.api.Loggable
-
-import scala.language.postfixOps
-
-class HashMapCache extends Cache[String, Any] with Loggable {
+class HashMapCache extends Cache[String, Any] with XLoggable {
   def get(namespace: scala.Enumeration#Value, key: String) =
     get(namespace, key, Caching.inner.ttl)
   def get(namespace: scala.Enumeration#Value, key: String, period: Long): Option[Any] =
@@ -33,10 +31,10 @@ class HashMapCache extends Cache[String, Any] with Loggable {
     log.trace("search cached value for namespace id " + namespaceID + " and key " + key)
     val ref = namespaceID + " " + key
     Caching.inner.map.get(ref).flatMap(_.get) match {
-      case None =>
+      case None ⇒
         log.trace("MISS")
         None
-      case Some((time, obj)) =>
+      case Some((time, obj)) ⇒
         if (period > 0)
           if (System.currentTimeMillis() - time <= period)
             Some(obj)
@@ -63,16 +61,16 @@ class HashMapCache extends Cache[String, Any] with Loggable {
     Caching.inner.map(ref) = new SoftReference((System.currentTimeMillis(), value))
   }
   def update(namespace: scala.Enumeration#Value, updates: Iterable[(String, Any)]): Unit =
-    updates.foreach(t => update(namespace, t._1, t._2))
+    updates.foreach(t ⇒ update(namespace, t._1, t._2))
   def remove(namespace: scala.Enumeration#Value, key: String): Option[Any] =
     remove(namespace.id, key)
   def remove(namespaceID: Int, key: String): Option[Any] = {
     val ref = namespaceID + " " + key
-    Caching.inner.map.remove(ref).flatMap(ref => ref.get.map(t => t._2))
+    Caching.inner.map.remove(ref).flatMap(ref ⇒ ref.get.map(t ⇒ t._2))
   }
   def clear(namespace: scala.Enumeration#Value): Unit = {
     val prefix = namespace.id + " "
-    Caching.inner.map.filter(t => t._1.startsWith(prefix)).foreach(t => {
+    Caching.inner.map.filter(t ⇒ t._1.startsWith(prefix)).foreach(t ⇒ {
       log.debug("remove cache ref " + prefix + t._1)
       Caching.inner.map.remove(t._1)
     })

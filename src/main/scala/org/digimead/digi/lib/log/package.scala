@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,54 +18,47 @@
 
 package org.digimead.digi.lib
 
+import com.escalatesoft.subcut.inject.{ BindingModule, NewBindingModule }
 import java.text.SimpleDateFormat
 import java.util.Date
-
-import scala.annotation.implicitNotFound
-
-import org.digimead.digi.lib.log.Logging
-import org.digimead.digi.lib.log.MDC
-import org.digimead.digi.lib.log.NDC
-import org.digimead.digi.lib.log.api.Level
-import org.digimead.digi.lib.log.api.RichLogger
+import org.digimead.digi.lib.log.{ Logging, MDC, NDC }
+import org.digimead.digi.lib.log.api.{ XLevel, XMessage, XRichLogger }
 import org.digimead.digi.lib.log.logger.BaseLogger
 import org.slf4j.LoggerFactory
-
-import com.escalatesoft.subcut.inject.BindingModule
-import com.escalatesoft.subcut.inject.NewBindingModule
+import scala.annotation.implicitNotFound
 
 package object log {
   private[log] lazy val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
-  lazy val default = new NewBindingModule(module => {
+  lazy val default = new NewBindingModule(module ⇒ {
     module.bind[Option[Logging.BufferedLogThread]] identifiedBy "Log.BufferedThread" toSingle { None }
     module.bind[SimpleDateFormat] identifiedBy "Log.Record.DateFormat" toSingle { dateFormat }
     module.bind[Int] identifiedBy "Log.Record.PID" toSingle { -1 }
-    module.bind[api.Message.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
-      level: Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
+    module.bind[XMessage.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
+      level: XLevel, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) ⇒
       new Message(date, tid, level, tag, tagClass, message, throwable, pid)
     }
-    module.bind[Record] toModuleSingle { implicit module => new Record }
-    module.bind[(String, Class[_]) => RichLogger] identifiedBy "Log.Builder" toProvider ((module: BindingModule) => {
+    module.bind[Record] toModuleSingle { implicit module ⇒ new Record }
+    module.bind[(String, Class[_]) ⇒ XRichLogger] identifiedBy "Log.Builder" toProvider ((module: BindingModule) ⇒ {
       def isWhereEnabled = module.injectOptional[Boolean](Some("Log.TraceWhereEnabled")) getOrElse false
-      (name: String, classTag: Class[_]) =>
+      (name: String, classTag: Class[_]) ⇒
         val richLogger = new org.digimead.digi.lib.log.logger.RichLogger(LoggerFactory.getLogger(name), isWhereEnabled)
         // add class tag if possible
         richLogger.base match {
-          case base: BaseLogger => base.loggerClass = classTag
-          case other: org.slf4j.Logger => // skip other unknown logger
+          case base: BaseLogger ⇒ base.loggerClass = classTag
+          case other: org.slf4j.Logger ⇒ // skip other unknown logger
         }
         richLogger
     })
-    module.bind[Logging] toModuleSingle { implicit module => new Logging }
+    module.bind[Logging] toModuleSingle { implicit module ⇒ new Logging }
   })
-  lazy val defaultWithDC = new NewBindingModule(module => {
-    module.bind[api.Message.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
-      level: Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) =>
+  lazy val defaultWithDC = new NewBindingModule(module ⇒ {
+    module.bind[XMessage.MessageBuilder] identifiedBy "Log.Record.Builder" toSingle { (date: Date, tid: Long,
+      level: XLevel, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int) ⇒
       new Message(date, tid, level, tag, tagClass, message + " " + getMDC + getNDC, throwable, pid)
     }
 
     def getMDC() = {
-      val mdc = MDC.getSeq.map(t => t._1 + "=" + t._2).mkString(", ")
+      val mdc = MDC.getSeq.map(t ⇒ t._1 + "=" + t._2).mkString(", ")
       if (mdc.isEmpty()) mdc else "{" + mdc + "}"
     }
     def getNDC() = {

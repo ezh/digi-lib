@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@
 
 package org.digimead.digi.lib
 
-import java.util.concurrent.atomic.AtomicBoolean
-
-import scala.collection.mutable
-import scala.ref.WeakReference
-
-import org.osgi.framework.FrameworkUtil
-
 import com.escalatesoft.subcut.inject.BindingModule
+import com.google.common.collect.Maps
+import java.util.Collections
+import java.util.concurrent.atomic.AtomicBoolean
+import org.osgi.framework.FrameworkUtil
+import scala.annotation.elidable
+import scala.collection.JavaConverters.mapAsScalaMapConverter
+import scala.ref.WeakReference
 
 // We may reinitialize singleton with OSGi bundle reload.
 /** Immutable dependency injection container */
-object DependencyInjection extends api.DependencyInjection.Provider {
+object DependencyInjection extends api.XDependencyInjection.Provider {
   private lazy val initializationRequired = new AtomicBoolean(true)
 
   /**
@@ -37,7 +37,7 @@ object DependencyInjection extends api.DependencyInjection.Provider {
    * It is impossible to use Class[PersistentInjectable] as key
    *  because it starts Scala object initialization
    */
-  private lazy val injectables = new mutable.LinkedHashMap[String, WeakReference[api.DependencyInjection.PersistentInjectable]] with mutable.SynchronizedMap[String, WeakReference[api.DependencyInjection.PersistentInjectable]]
+  private lazy val injectables = Collections.synchronizedMap(Maps.newLinkedHashMap[String, WeakReference[api.XDependencyInjection.PersistentInjectable]]).asScala
 
   /** Returns the current dependency injection content. */
   def apply(): BindingModule = synchronized {
@@ -67,7 +67,7 @@ object DependencyInjection extends api.DependencyInjection.Provider {
   /** Assert if value is dynamic (i.e. recreated each time). */
   def assertDynamic[T: Manifest](name: String)(implicit module: BindingModule): Unit = assertDynamic[T](Some(name), module: BindingModule)
   /** Assert if value is dynamic (i.e. recreated each time). */
-  def assertDynamic[T: Manifest](name: Option[String], module: BindingModule): Unit = Option(module).foreach { m =>
+  def assertDynamic[T: Manifest](name: Option[String], module: BindingModule): Unit = Option(module).foreach { m ⇒
     val bindingKey = key[T](name)
     assert(m.bindings.isDefinedAt(bindingKey), s"$bindingKey not found")
     val bindingClassName = m.bindings(bindingKey).getClass.getName
@@ -79,7 +79,7 @@ object DependencyInjection extends api.DependencyInjection.Provider {
   /** Assert if value is lazy (i.e. created on demand). */
   def assertLazy[T: Manifest](name: String)(implicit module: BindingModule): Unit = assertLazy[T](Some(name), module)
   /** Assert if value is lazy (i.e. created on demand). */
-  def assertLazy[T: Manifest](name: Option[String], module: BindingModule): Unit = Option(module).foreach { m =>
+  def assertLazy[T: Manifest](name: Option[String], module: BindingModule): Unit = Option(module).foreach { m ⇒
     val bindingKey = key[T](name)
     assert(m.bindings.isDefinedAt(bindingKey), s"$bindingKey not found")
     val bindingClassName = m.bindings(bindingKey).getClass.getName
@@ -91,41 +91,41 @@ object DependencyInjection extends api.DependencyInjection.Provider {
   def inject() {
     // initialize objects
     injectables.foreach {
-      case (className, ref) =>
+      case (className, ref) ⇒
         ref.get match {
-          case Some(pi) =>
+          case Some(pi) ⇒
             // initialize PersistentInjectable with assert
             assert(pi.bindingModule != null)
-          case None =>
+          case None ⇒
             try {
-              val pi = Class.forName(className).getField("MODULE$").get(null).asInstanceOf[api.DependencyInjection.PersistentInjectable]
+              val pi = Class.forName(className).getField("MODULE$").get(null).asInstanceOf[api.XDependencyInjection.PersistentInjectable]
               // initialize PersistentInjectable with if
               if (pi.bindingModule != null)
                 injectables(className) = new WeakReference(pi)
             } catch {
-              case e: ClassNotFoundException =>
+              case e: ClassNotFoundException ⇒
                 val dependencyBundle = try {
                   // Iterate over all bundles. Try to find the required class.
-                  Option(FrameworkUtil.getBundle(getClass)) flatMap { thisBundle =>
-                    thisBundle.getBundleContext().getBundles().find(bundle =>
-                      try { bundle.loadClass(className); true } catch { case e: ClassNotFoundException => false })
+                  Option(FrameworkUtil.getBundle(getClass)) flatMap { thisBundle ⇒
+                    thisBundle.getBundleContext().getBundles().find(bundle ⇒
+                      try { bundle.loadClass(className); true } catch { case e: ClassNotFoundException ⇒ false })
                   }
                 } catch {
-                  case e: Throwable => None
+                  case e: Throwable ⇒ None
                 }
                 dependencyBundle match {
-                  case Some(dependencyBundle) =>
+                  case Some(dependencyBundle) ⇒
                     try {
-                      val pi = dependencyBundle.loadClass(className).getField("MODULE$").get(null).asInstanceOf[api.DependencyInjection.PersistentInjectable]
+                      val pi = dependencyBundle.loadClass(className).getField("MODULE$").get(null).asInstanceOf[api.XDependencyInjection.PersistentInjectable]
                       // initialize PersistentInjectable with if
                       if (pi.bindingModule != null)
                         injectables(className) = new WeakReference(pi)
                     } catch {
-                      case e: Throwable =>
+                      case e: Throwable ⇒
                         System.err.println("DependencyInjection error: " + e)
                         throw e
                     }
-                  case None =>
+                  case None ⇒
                     System.err.println("DependencyInjection error: " + e)
                     throw e
                 }
@@ -134,7 +134,7 @@ object DependencyInjection extends api.DependencyInjection.Provider {
               // User must reinject DI from every bundle activator.
               // Initialized DI objects with val/lazy val will be unaffected.
               // Initialization will only affect newly created objects.
-              case e: Throwable =>
+              case e: Throwable ⇒
                 System.err.println("DependencyInjection error: " + e)
                 throw e
             }
@@ -142,7 +142,7 @@ object DependencyInjection extends api.DependencyInjection.Provider {
     }
     // Call commit after initialization.
     // StashWithDependencyInjectionCommit is lazy val so it is called only once.
-    injectables.foreach(clazz => getPersistentInjectable(clazz._1).map(invokeStashWithDependencyInjectionCommit))
+    injectables.foreach(clazz ⇒ getPersistentInjectable(clazz._1).map(invokeStashWithDependencyInjectionCommit))
   }
   def key[T](name: String)(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, Some(name))
   def key[T](name: Option[String])(implicit m: Manifest[T]) = com.escalatesoft.subcut.inject.getBindingKey[T](m, name)
@@ -151,9 +151,9 @@ object DependencyInjection extends api.DependencyInjection.Provider {
    * create wrapper for SubCut toModuleSingle
    * singleton will initialized only once
    */
-  def makeInitOnce[T](f: (BindingModule) => T): BindingModule => T = {
+  def makeInitOnce[T](f: (BindingModule) ⇒ T): BindingModule ⇒ T = {
     @volatile var saved: Option[T] = None
-    (newModule) => saved getOrElse { saved = Some(f(newModule)); saved.get }
+    (newModule) ⇒ saved getOrElse { saved = Some(f(newModule)); saved.get }
   }
   /**
    * add persistent object in injectables
@@ -165,7 +165,7 @@ object DependencyInjection extends api.DependencyInjection.Provider {
   /**
    * add/update persistent object in injectables
    */
-  def setPersistentInjectable(pobj: api.DependencyInjection.PersistentInjectable) =
+  def setPersistentInjectable(pobj: api.XDependencyInjection.PersistentInjectable) =
     injectables(pobj.getClass.getName()) = new WeakReference(pobj)
   /**
    * Check if BindingModule contains illegal bindings
@@ -173,28 +173,28 @@ object DependencyInjection extends api.DependencyInjection.Provider {
    *    example use case: OSGi environment. Pass only keys that begin with java.*, scala.* or defined globally or available
    * @return invalid keys
    */
-  def validate(keyValidator: (Manifest[_], Option[String], Class[_]) => Boolean, instance: AnyRef) =
-    apply().bindings.keys.filterNot { key => keyValidator(key.m, key.name, instance.getClass) }
+  def validate(keyValidator: (Manifest[_], Option[String], Class[_]) ⇒ Boolean, instance: AnyRef) =
+    apply().bindings.keys.filterNot { key ⇒ keyValidator(key.m, key.name, instance.getClass) }
 
   /**
    * get persistent object from injectables
    */
-  private def getPersistentInjectable(persistentObjectClassName: String): Option[api.DependencyInjection.PersistentInjectable] =
+  private def getPersistentInjectable(persistentObjectClassName: String): Option[api.XDependencyInjection.PersistentInjectable] =
     injectables.get(persistentObjectClassName) match {
-      case Some(pobj) =>
+      case Some(pobj) ⇒
         pobj.get orElse {
           try {
-            val clazz = Class.forName(persistentObjectClassName).asInstanceOf[Class[api.DependencyInjection.PersistentInjectable]]
-            val result = clazz.getField("MODULE$").get(clazz).asInstanceOf[api.DependencyInjection.PersistentInjectable]
+            val clazz = Class.forName(persistentObjectClassName).asInstanceOf[Class[api.XDependencyInjection.PersistentInjectable]]
+            val result = clazz.getField("MODULE$").get(clazz).asInstanceOf[api.XDependencyInjection.PersistentInjectable]
             injectables(persistentObjectClassName) = new WeakReference(result)
             Some(result)
           } catch {
             // This catches all Throwables because we must return None if something wrong
-            case e: Throwable =>
+            case e: Throwable ⇒
               None
           }
         }
-      case None =>
+      case None ⇒
         None
     }
 }

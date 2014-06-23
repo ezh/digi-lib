@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2013-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,22 @@
 
 package org.digimead.digi.lib.api
 
-import com.escalatesoft.subcut.inject.BindingModule
-import com.escalatesoft.subcut.inject.Injectable
+import com.escalatesoft.subcut.inject.{ BindingModule, Injectable }
 
 /**
  * Dependency Injection service that contains actual DI module.
  */
-trait DependencyInjection {
+trait XDependencyInjection {
   /** Returns actual DI. From the nonOSGi world, for example. */
   def getDependencyInjection(): BindingModule
   /**
    * Returns DI key validator if any.
    * @return - f(x,y,z) where x is key manifest, y is key name, z is DI loader.
    */
-  def getDependencyValidator(): Option[(Manifest[_], Option[String], Class[_]) => Boolean]
+  def getDependencyValidator(): Option[(Manifest[_], Option[String], Class[_]) ⇒ Boolean]
 }
 
-object DependencyInjection {
+object XDependencyInjection {
   /** Current application DI */
   private var di: BindingModule = null
 
@@ -43,22 +42,22 @@ object DependencyInjection {
   /** Provider interface. */
   trait Provider {
     /** Get DI module. */
-    def di = DependencyInjection.di
+    def di = XDependencyInjection.di
     /** Set DI module. */
-    def di_=(module: BindingModule) = DependencyInjection.di = module
+    def di_=(module: BindingModule) = XDependencyInjection.di = module
     /** Call stashWithDependencyInjectionCommit inside PersistentInjectable. */
     protected def invokeStashWithDependencyInjectionCommit(obj: PersistentInjectable): Unit =
       obj.stashWithDependencyInjectionCommit
   }
   /** Singleton consumer interface. */
   trait PersistentInjectable extends Injectable {
-    implicit def bindingModule = DependencyInjection.synchronized {
-      if (DependencyInjection.di == null)
+    implicit def bindingModule = XDependencyInjection.synchronized {
+      if (XDependencyInjection.di == null)
         throw new IllegalStateException("Dependency injection is not initialized.")
-      DependencyInjection.di
+      XDependencyInjection.di
     }
     /** Stash that is called only once. */
-    private[DependencyInjection] lazy val stashWithDependencyInjectionCommit = { injectionCommit() }
+    private[XDependencyInjection] lazy val stashWithDependencyInjectionCommit = { injectionCommit() }
 
     org.digimead.digi.lib.DependencyInjection.setPersistentInjectable(this)
     /**
@@ -136,7 +135,7 @@ object DependencyInjection {
      * @return an instance that subclasses the trait, either from the binding definitions, or using the provided
      * function if no matching binding is defined.
      */
-    override def injectIfBound[T <: Any](fn: => T)(implicit m: scala.reflect.Manifest[T]): T =
+    override def injectIfBound[T <: Any](fn: ⇒ T)(implicit m: scala.reflect.Manifest[T]): T =
       synchronized { super.injectIfBound[T]({ fn }) }
 
     /**
@@ -150,7 +149,7 @@ object DependencyInjection {
      * @return an instance that subclasses the trait, either from the binding definitions, or using the provided
      * function if no matching binding is defined.
      */
-    override def injectIfBound[T <: Any](name: String)(fn: => T)(implicit m: scala.reflect.Manifest[T]): T =
+    override def injectIfBound[T <: Any](name: String)(fn: ⇒ T)(implicit m: scala.reflect.Manifest[T]): T =
       synchronized { super.injectIfBound[T](name)({ fn }) }
 
     /**
@@ -164,7 +163,7 @@ object DependencyInjection {
      * @return an instance that subclasses the trait, either from the binding definitions, or using the provided
      * function if no matching binding is defined.
      */
-    override def injectIfBound[T <: Any](symbol: Symbol)(fn: => T)(implicit m: scala.reflect.Manifest[T]): T =
+    override def injectIfBound[T <: Any](symbol: Symbol)(fn: ⇒ T)(implicit m: scala.reflect.Manifest[T]): T =
       synchronized { super.injectIfBound[T](symbol)({ fn }) }
 
     /**

@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@
 
 package org.digimead.digi.lib.log.appender
 
-import org.digimead.digi.lib.log.api.Appender
-import org.digimead.digi.lib.log.api.Message
+import org.digimead.digi.lib.log.api.{ XAppender, XMessage }
 
-object Console extends Appender {
-  protected var f = (records: Array[Message]) => synchronized {
-    records.foreach(r => {
+object Console extends XAppender {
+  protected var f = (records: Array[XMessage]) ⇒ synchronized {
+    records.foreach(r ⇒ {
       System.err.println(r.toString())
-      r.throwable.foreach { t =>
+      r.throwable.foreach { t ⇒
         System.err.print("\n")
         t.printStackTrace(System.err)
       }

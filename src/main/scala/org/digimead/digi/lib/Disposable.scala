@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2013-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@
 package org.digimead.digi.lib
 
 import java.lang.ref.WeakReference
-
-import org.digimead.digi.lib.aop.{ log => alog }
-import org.digimead.digi.lib.log.api.Loggable
+import org.digimead.digi.lib.aop.{ log ⇒ alog }
+import org.digimead.digi.lib.log.api.XLoggable
 
 /** Disposable interface. */
 trait Disposable {
@@ -43,20 +42,20 @@ object Disposable {
 
   /** Clean method that nullify all obj non primitive fields via reflection. */
   def clean(obj: AnyRef): Unit =
-    obj.getClass().getDeclaredFields().foreach(field =>
+    obj.getClass().getDeclaredFields().foreach(field ⇒
       if (!field.getType().isPrimitive()) try {
         if (!field.isAccessible())
           field.setAccessible(true)
         field.set(obj, null)
       } catch {
-        case e: Throwable =>
+        case e: Throwable ⇒
           obj match {
-            case loggable: Loggable => try {
+            case loggable: XLoggable ⇒ try {
               loggable.log.debug(s"Unable to clear field ${field} for class ${obj.getClass()}: " + e.getMessage)
             } catch {
-              case e: Throwable => // not interesting
+              case e: Throwable ⇒ // not interesting
             }
-            case other => // not interesting
+            case other ⇒ // not interesting
           }
       })
   /** Transitive disposable trait that is based on "Scala's Stackable Trait Pattern" */

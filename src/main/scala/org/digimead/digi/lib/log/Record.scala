@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ package org.digimead.digi.lib.log
 
 import java.text.SimpleDateFormat
 import java.util.Date
-
 import com.escalatesoft.subcut.inject.BindingModule
 import com.escalatesoft.subcut.inject.Injectable
+import org.digimead.digi.lib.log.api.XMessage
 
 class Record(implicit val bindingModule: BindingModule) extends Injectable {
-  val builder = inject[api.Message.MessageBuilder]("Log.Record.Builder")
+  val builder = inject[XMessage.MessageBuilder]("Log.Record.Builder")
   val pid = inject[Int]("Log.Record.PID")
   val dateFormat = inject[SimpleDateFormat]("Log.Record.DateFormat")
 }

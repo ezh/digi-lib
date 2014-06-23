@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,64 +18,54 @@
 
 package org.digimead.digi.lib.log
 
-import java.util.Date
-import java.util.concurrent.ConcurrentLinkedQueue
-
-import scala.Array.canBuildFrom
-import scala.annotation.tailrec
-import scala.collection.immutable.HashSet
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.Publisher
-import scala.collection.mutable.SynchronizedMap
-import scala.util.control.Breaks.break
-import scala.util.control.Breaks.breakable
-
-import org.digimead.digi.lib.api.DependencyInjection
-import org.digimead.digi.lib.log.api.Loggable
-import org.digimead.digi.lib.log.api.RichLogger
-import org.digimead.digi.lib.log.api.Appender
+import com.escalatesoft.subcut.inject.{ BindingModule, Injectable }
+import com.google.common.collect.Maps
+import java.util.concurrent.{ ConcurrentHashMap, ConcurrentLinkedQueue }
+import java.util.{ Collections, Date }
+import org.digimead.digi.lib.api.XDependencyInjection
+import org.digimead.digi.lib.log.api.{ XAppender, XLevel, XLoggable, XRichLogger }
 import org.slf4j.LoggerFactory
-
-import com.escalatesoft.subcut.inject.BindingModule
-import com.escalatesoft.subcut.inject.Injectable
-
-import language.implicitConversions
+import scala.annotation.tailrec
+import scala.collection.JavaConverters.mapAsScalaMapConverter
+import scala.collection.immutable.HashSet
+import scala.language.implicitConversions
+import scala.util.control.Breaks.{ break, breakable }
 
 class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   val record = inject[Record]
-  val builder = inject[(String, Class[_]) => RichLogger]("Log.Builder")
+  val builder = inject[(String, Class[_]) ⇒ XRichLogger]("Log.Builder")
   /** prefix for all adb logcat TAGs, everyone may change (but should not) it on his/her own risk */
   val logPrefix = injectOptional[String]("Log.Buffered") getOrElse "@"
   val isWhereEnabled = injectOptional[Boolean]("Log.TraceWhereEnabled") getOrElse false
   val bufferedThread = inject[Option[Logging.BufferedLogThread]]("Log.BufferedThread")
   val bufferedFlushLimit = injectOptional[Int]("Log.BufferedFlushLimit") getOrElse 1000
   val bufferedAppender = {
-    val appenders = injectOptional[HashSet[Appender]]("Log.BufferedAppenders") getOrElse HashSet[Appender]()
+    val appenders = injectOptional[HashSet[XAppender]]("Log.BufferedAppenders") getOrElse HashSet[XAppender]()
     if (appenders.nonEmpty)
       assert(bufferedThread.nonEmpty, "DI Log.BufferedThread is lost in space")
     appenders
   }
-  val shutdownHook = injectOptional[() => Any]("Log.ShutdownHook")
-  val richLogger = new HashMap[String, RichLogger]() with SynchronizedMap[String, RichLogger]
-  lazy val commonLogger: RichLogger = {
+  val shutdownHook = injectOptional[() ⇒ Any]("Log.ShutdownHook")
+  val richLogger = new ConcurrentHashMap[String, XRichLogger].asScala
+  lazy val commonLogger: XRichLogger = {
     val name = if (bufferedThread.nonEmpty) "@~*~*~*~*" else getClass.getName()
     val logger = new org.digimead.digi.lib.log.logger.RichLogger(LoggerFactory.getLogger(name), isWhereEnabled)
     richLogger(name) = logger
     logger
   }
-  val bufferedQueue = new ConcurrentLinkedQueue[api.Message]
-  private val bufferedSlice = new Array[api.Message](bufferedFlushLimit)
+  val bufferedQueue = new ConcurrentLinkedQueue[api.XMessage]
+  private val bufferedSlice = new Array[api.XMessage](bufferedFlushLimit)
 
   /** Deinitialize logging. */
   def deinit() {
     bufferedThread.foreach(_.deinit)
-    Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Deinitialize ${this.toString}.")
+    Logging.addToLog(new Date(), Thread.currentThread.getId, XLevel.Debug, commonLogger.getName, getClass, s"Deinitialize ${this.toString}.")
     flush(0)
     bufferedQueue.clear()
     bufferedQueue.synchronized { bufferedQueue.notifyAll() }
     bufferedAppender.foreach {
-      appender =>
-        Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Deinitialize appender ${appender}.")
+      appender ⇒
+        Logging.addToLog(new Date(), Thread.currentThread.getId, XLevel.Debug, commonLogger.getName, getClass, s"Deinitialize appender ${appender}.")
         flush(0)
         appender.flush()
         appender.deinit()
@@ -91,20 +81,20 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
   }
   /** Initialize logging. */
   def init() {
-    Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass,
+    Logging.addToLog(new Date(), Thread.currentThread.getId, XLevel.Debug, commonLogger.getName, getClass,
       if (bufferedThread.nonEmpty)
         s"Initialize logging with buffered slf4j logger and ${this.toString}."
       else
         s"Initialize logging with direct slf4j logger and ${this.toString}.")
     bufferedAppender.foreach {
-      appender =>
-        Logging.addToLog(new Date(), Thread.currentThread.getId, api.Level.Debug, commonLogger.getName, getClass, s"Initialize appender $appender.")
+      appender ⇒
+        Logging.addToLog(new Date(), Thread.currentThread.getId, XLevel.Debug, commonLogger.getName, getClass, s"Initialize appender $appender.")
         appender.init()
     }
     bufferedThread.foreach(_.init)
   }
   /** Add record to buffered queue. */
-  def offer(record: api.Message) = bufferedQueue.synchronized {
+  def offer(record: api.XMessage) = bufferedQueue.synchronized {
     bufferedQueue.offer(record)
     bufferedQueue.notifyAll
   }
@@ -123,8 +113,8 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
     bufferedSlice.synchronized {
       val limit = if (n <= bufferedFlushLimit) (n - accumulator) else bufferedFlushLimit
       while (records < limit && !bufferedQueue.isEmpty()) {
-        bufferedSlice(records) = bufferedQueue.poll().asInstanceOf[api.Message]
-        api.Event.publish(new api.Event.Outgoing(bufferedSlice(records)))
+        bufferedSlice(records) = bufferedQueue.poll().asInstanceOf[api.XMessage]
+        api.XEvent.publish(new api.XEvent.Outgoing(bufferedSlice(records)))
         records += 1
       }
       bufferedAppender.foreach(_(bufferedSlice.take(records)))
@@ -145,10 +135,10 @@ class Logging(implicit val bindingModule: BindingModule) extends Injectable {
 object Logging {
   implicit def Logging2implementation(l: Logging.type): Logging = inner
   private val loggingObjectName = getClass.getName
-  private val loggableClassName = classOf[org.digimead.digi.lib.log.api.Loggable].getName
+  private val loggableClassName = classOf[XLoggable].getName
 
   /**
-   * Create api.Message implementation with api.Message.MessageBuilder
+   * Create api.XMessage implementation with api.XMessage.XMessageBuilder
    *
    * @param date      log timestamp
    * @param tid       log origin Thread ID
@@ -157,10 +147,10 @@ object Logging {
    * @param tagClass  internal(full) tag representation suitable for message filtering
    * @param message   log message
    */
-  def addToLog(date: Date, tid: Long, level: api.Level, tag: String, tagClass: Class[_], message: String): Unit =
+  def addToLog(date: Date, tid: Long, level: XLevel, tag: String, tagClass: Class[_], message: String): Unit =
     addToLog(date, tid, level, tag, tagClass, message, None)
   /**
-   * Create Record.Message implementation with Record.MessageBuilder
+   * Create Record.XMessage implementation with Record.XMessageBuilder
    *
    * @param date      log timestamp
    * @param tid       log origin Thread ID
@@ -170,10 +160,10 @@ object Logging {
    * @param message   log message
    * @param throwable log throwable if any
    */
-  def addToLog(date: Date, tid: Long, level: api.Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable]): Unit =
+  def addToLog(date: Date, tid: Long, level: XLevel, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable]): Unit =
     addToLog(date, tid, level, tag, tagClass, message, throwable, inner.record.pid)
   /**
-   * Create Record.Message implementation with Record.MessageBuilder
+   * Create Record.XMessage implementation with Record.XMessageBuilder
    *
    * @param date     log timestamp
    * @param tid      log origin Thread ID
@@ -183,43 +173,43 @@ object Logging {
    * @param message  log message
    * @param pid      log Process ID. Very handy in distributed environment.
    */
-  def addToLog(date: Date, tid: Long, level: api.Level, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int): Unit = {
+  def addToLog(date: Date, tid: Long, level: XLevel, tag: String, tagClass: Class[_], message: String, throwable: Option[Throwable], pid: Int): Unit = {
     val implementation = inner()
     if (implementation.bufferedThread.nonEmpty)
       implementation.offer(implementation.record.builder(date, tid, level, tag, tagClass, message, throwable, pid))
     else
       level match {
-        case api.Level.Trace => implementation.commonLogger.trace(message)
-        case api.Level.Debug => implementation.commonLogger.debug(message)
-        case api.Level.Info => implementation.commonLogger.info(message)
-        case api.Level.Warn => implementation.commonLogger.warn(message)
-        case api.Level.Error => implementation.commonLogger.error(message)
+        case XLevel.Trace ⇒ implementation.commonLogger.trace(message)
+        case XLevel.Debug ⇒ implementation.commonLogger.debug(message)
+        case XLevel.Info ⇒ implementation.commonLogger.info(message)
+        case XLevel.Warn ⇒ implementation.commonLogger.warn(message)
+        case XLevel.Error ⇒ implementation.commonLogger.error(message)
       }
   }
   /**
    * transform clazz to filename and return logger name
    */
   // Synchronized per class.
-  def getLogger(clazz: Class[_]): RichLogger = clazz.synchronized {
+  def getLogger(clazz: Class[_]): XRichLogger = clazz.synchronized {
     val stackArray = Thread.currentThread.getStackTrace().dropWhile(_.getClassName != getClass.getName)
     // current class element
     var thisMethodElement: Option[StackTraceElement] = None
     // client class element
     var thatMethodElement: Option[StackTraceElement] = None
     breakable {
-      for (i <- 0 until stackArray.size) {
+      for (i ← 0 until stackArray.size) {
         thisMethodElement match {
           case Some(element) if stackArray(i).getFileName != element.getFileName &&
-            !stackArray(i).getClassName.startsWith(loggableClassName) =>
+            !stackArray(i).getClassName.startsWith(loggableClassName) ⇒
             // client method element found
             thatMethodElement = Some(stackArray(i))
             break
-          case Some(element) =>
+          case Some(element) ⇒
           // skip element before thatMethodElement
-          case None if stackArray(i).getClassName != loggingObjectName =>
+          case None if stackArray(i).getClassName != loggingObjectName ⇒
             // current method element found
             thisMethodElement = Some(stackArray(i))
-          case None =>
+          case None ⇒
           // skip element before thisMethodElement
         }
       }
@@ -227,28 +217,28 @@ object Logging {
     val namePrefix = inner.logPrefix
     val name1stPart = clazz.getPackage.getName.split("""\.""").last
     val name2ndPart = thatMethodElement match {
-      case Some(element) =>
+      case Some(element) ⇒
         val fileRaw = element.getFileName.split("""\.""")
         if (fileRaw.length > 1) fileRaw.dropRight(1).mkString(".") else fileRaw.head
-      case None =>
+      case None ⇒
         clazz.getName.split("""[\.$]""").last
     }
     val nameSuffix = if (clazz.getClass().toString.last == '$') "$" else ""
     getLogger(namePrefix + name1stPart + "." + name2ndPart + nameSuffix, clazz)
   }
-  def getLogger(name: String, tagClass: Class[_] = null): RichLogger = {
+  def getLogger(name: String, tagClass: Class[_] = null): XRichLogger = {
     val implementation = inner
     implementation.richLogger.get(name) match {
-      case Some(logger) => logger
-      case None =>
+      case Some(logger) ⇒ logger
+      case None ⇒
         val logger = implementation.builder(name, Option(tagClass).getOrElse(try {
           Class.forName(name)
         } catch {
-          case e: Throwable =>
+          case e: Throwable ⇒
             classOf[AnyRef]
         }))
         implementation.richLogger(name) = logger
-        api.Event.publish(new api.Event.RegisterLogger(logger))
+        api.XEvent.publish(new api.XEvent.RegisterLogger(logger))
         logger
     }
   }
@@ -264,10 +254,10 @@ object Logging {
   /**
    * Dependency injection routines
    */
-  private object DI extends DependencyInjection.PersistentInjectable {
+  private object DI extends XDependencyInjection.PersistentInjectable {
     /** Logging implementation */
     lazy val implementation = inject[Logging]
     /** User defined shutdown hook */
-    lazy val shutdownHook = injectOptional[() => Any]("Log.ShutdownHook")
+    lazy val shutdownHook = injectOptional[() ⇒ Any]("Log.ShutdownHook")
   }
 }

@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,13 @@
 
 package org.digimead.digi.lib.aop
 
-import scala.Array.canBuildFrom
+import akka.pattern.ask
+import org.digimead.digi.lib.api.XDependencyInjection
+import org.digimead.digi.lib.cache.{ Caching ⇒ CCaching }
+import org.digimead.digi.lib.log.api.XLoggable
 import scala.concurrent.Await
 
-import org.digimead.digi.lib.api.DependencyInjection
-import org.digimead.digi.lib.cache.{ Caching => CCaching }
-import org.digimead.digi.lib.log.api.Loggable
-
-import com.escalatesoft.subcut.inject.BindingModule
-
-import akka.actor.actorRef2Scala
-import akka.pattern.ask
-
-abstract class Caching extends Loggable {
+abstract class Caching extends XLoggable {
   protected def execute(invoker: Invoker, annotation: cache, longSignature: String, shortSignature: String, args: Array[AnyRef]): Any = {
     // TODO val logging = log.isTraceEnabled()
     /*
@@ -40,14 +34,14 @@ abstract class Caching extends Loggable {
     val instance = Caching.DI.implementation
     val key = if (annotation.examination() && args.nonEmpty) {
       args.head match {
-        case Caching.BoxedTrue =>
+        case Caching.BoxedTrue ⇒
           // forced
           val key = longSignature.hashCode() + " " + args.tail.map(_.hashCode()).mkString(" ")
           log.trace("FORCED " + shortSignature + " with namespace id " + annotation.namespace)
           return invokeOriginal(invoker, key, annotation.namespace())
-        case Caching.BoxedFalse =>
+        case Caching.BoxedFalse ⇒
           longSignature.hashCode() + " " + args.tail.map(_.hashCode()).mkString(" ")
-        case _ =>
+        case _ ⇒
           // lost in space? lazy code? something broken? null? something modify bytecode or other reasons...
           // nothing critical, but notify someone
           log.warn("UNKNOWN TYPE of cacheable method 1st argument, " + shortSignature + " with namespace id " + annotation.namespace)
@@ -59,12 +53,12 @@ abstract class Caching extends Loggable {
     if (instance == null)
       return invokeOriginal(invoker, key, annotation.namespace())
     implicit val timeout = instance.requestTimeout
-    val future = instance.actor ? CCaching.Message.GetByID(annotation.namespace(), key, annotation.period())
+    val future = instance.actor ? CCaching.XMessage.GetByID(annotation.namespace(), key, annotation.period())
     Await.result(future, timeout.duration) match {
-      case r @ Some(retVal) =>
+      case r @ Some(retVal) ⇒
         log.trace("HIT, key " + key + " found, returning cached value")
         return r
-      case None =>
+      case None ⇒
         log.trace("MISS, key " + key + " not found, invoking original method")
         invokeOriginal(invoker, key, annotation.namespace())
     }
@@ -78,24 +72,24 @@ abstract class Caching extends Loggable {
     // all cases except "Option" and "Traversable" must throw scala.MatchError
     // so developer notified about design bug
     invoker.invoke() match {
-      case r @ Traversable =>
+      case r @ Traversable ⇒
         // process collection
-        instance.actor ! CCaching.Message.UpdateByID(namespaceID, key, r)
+        instance.actor ! CCaching.XMessage.UpdateByID(namespaceID, key, r)
         log.trace("key " + key + " updated")
         r
-      case Nil =>
+      case Nil ⇒
         // process Nil
-        instance.actor ! CCaching.Message.RemoveByID(namespaceID, key)
+        instance.actor ! CCaching.XMessage.RemoveByID(namespaceID, key)
         log.trace("key " + key + "  removed, original method return Nil value")
         Nil
-      case r @ Some(retVal) =>
+      case r @ Some(retVal) ⇒
         // process option
-        instance.actor ! CCaching.Message.UpdateByID(namespaceID, key, retVal)
+        instance.actor ! CCaching.XMessage.UpdateByID(namespaceID, key, retVal)
         log.trace("key " + key + " updated")
         r
-      case None =>
+      case None ⇒
         // process None
-        instance.actor ! CCaching.Message.RemoveByID(namespaceID, key)
+        instance.actor ! CCaching.XMessage.RemoveByID(namespaceID, key)
         log.trace("key " + key + " removed, original return None value")
         None
     }
@@ -114,7 +108,7 @@ object Caching {
   /**
    * Dependency injection routines
    */
-  private object DI extends DependencyInjection.PersistentInjectable {
+  private object DI extends XDependencyInjection.PersistentInjectable {
     /** The caching instance cache */
     lazy val implementation: CCaching = inject[CCaching]
   }

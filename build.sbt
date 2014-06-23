@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+// Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ inConfig(OSGiConf)({
   Seq[Project.Setting[_]](
     osgiBndBundleActivator := "org.digimead.digi.lib.Activator",
     osgiBndBundleSymbolicName := "org.digimead.digi.lib",
-    osgiBndBundleCopyright := "Copyright © 2011-2013 Alexey B. Aksenov/Ezh. All rights reserved.",
+    osgiBndBundleCopyright := "Copyright © 2011-2014 Alexey B. Aksenov/Ezh. All rights reserved.",
     osgiBndExportPackage := List("org.digimead.*", "com.escalatesoft.subcut.inject"),
     osgiBndImportPackage := List("!org.aspectj.*", "com.escalatesoft.subcut.inject", "*"),
     osgiBndBundleLicense := "http://www.apache.org/licenses/LICENSE-2.0.txt;description=The Apache Software License, Version 2.0"
@@ -88,10 +88,15 @@ resolvers += "digimead-maven" at "http://storage.googleapis.com/maven.repository
 
 libraryDependencies ++= Seq(
     "com.escalatesoft.subcut" %% "subcut" % "2.1",
+    // https://issues.scala-lang.org/browse/SI-7751
+    // .../guava-15.0.jar(com/google/common/cache/CacheBuilder.class)' is broken
+    // [error] (class java.lang.RuntimeException/bad constant pool index: 0 at pos: 15214)
+    "com.google.code.findbugs" % "jsr305" % "2.0.3",
+    "com.google.guava" % "guava" % "17.0",
     "com.typesafe.akka" %% "akka-actor" % "2.3.3",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
     "org.aspectj" % "aspectjrt" % "1.8.0",
-    "org.digimead" %% "digi-lib-test" % "0.2.2.5-SNAPSHOT" % "test",
+    "org.digimead" %% "digi-lib-test" % "0.3.0.0-SNAPSHOT" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
     "org.slf4j" % "slf4j-api" % "1.7.7"

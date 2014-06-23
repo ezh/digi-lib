@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import scala.collection.mutable.Publisher
 /**
  * Log event base trait.
  */
-sealed trait Event
+sealed trait XEvent
 
 /**
  * Log event publisher.
  */
-object Event extends Publisher[Event] {
-  override protected[log] def publish(event: Event) = try {
+object XEvent extends Publisher[XEvent] {
+  override protected[log] def publish(event: XEvent) = try {
     super.publish(event)
   } catch {
     // This catches all Throwables because we want to record exception to log file
@@ -37,7 +37,7 @@ object Event extends Publisher[Event] {
       org.digimead.digi.lib.log.Logging.inner.commonLogger.error(e.getMessage(), e)
       e.printStackTrace() // maybe end user could copy'n'paste it for us
   }
-  case class Incoming(val logger: RichLogger, val level: Level, val message: String, throwable: Option[Throwable]) extends Event
-  case class Outgoing(val record: Message) extends Event
-  case class RegisterLogger(val logger: RichLogger) extends Event
+  case class Incoming(val logger: XRichLogger, val level: XLevel, val message: String, throwable: Option[Throwable]) extends XEvent
+  case class Outgoing(val record: XMessage) extends XEvent
+  case class RegisterLogger(val logger: XRichLogger) extends XEvent
 }

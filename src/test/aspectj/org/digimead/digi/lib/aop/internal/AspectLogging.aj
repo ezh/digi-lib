@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,23 @@ package org.digimead.digi.lib.aop.internal;
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.digimead.digi.lib.aop.log;
-import org.digimead.digi.lib.log.api.Loggable;
+import org.digimead.digi.lib.log.api.XLoggable;
 
 privileged public final aspect AspectLogging {
-	public pointcut loggingNonVoid(Loggable obj, log l) : target(obj) && execution(@log !void *(..)) && @annotation(l);
+	public pointcut loggingNonVoid(XLoggable obj, log l) : target(obj) && execution(@log !void *(..)) && @annotation(l);
 
-	public pointcut loggingVoid(Loggable obj, log l) : target(obj) && execution(@log void *(..)) && @annotation(l);
+	public pointcut loggingVoid(XLoggable obj, log l) : target(obj) && execution(@log void *(..)) && @annotation(l);
 
-	public pointcut logging(Loggable obj, log l) : loggingVoid(obj, l) || loggingNonVoid(obj, l);
+	public pointcut logging(XLoggable obj, log l) : loggingVoid(obj, l) || loggingNonVoid(obj, l);
 
-	before(final Loggable obj, final log log) : logging(obj, log) {
+	before(final XLoggable obj, final log log) : logging(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
 		org.digimead.digi.lib.aop.Logging$.MODULE$.enteringMethod(
 				location.getFileName(), location.getLine(),
 				thisJoinPointStaticPart.getSignature(), obj);
 	}
 
-	after(final Loggable obj, final log log) returning(final Object result) : loggingNonVoid(obj, log) {
+	after(final XLoggable obj, final log log) returning(final Object result) : loggingNonVoid(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
 		if (log != null && log.result())
 			org.digimead.digi.lib.aop.Logging$.MODULE$.leavingMethod(
@@ -48,14 +48,14 @@ privileged public final aspect AspectLogging {
 					thisJoinPointStaticPart.getSignature(), obj);
 	}
 
-	after(final Loggable obj, final log log) returning() : loggingVoid(obj, log) {
+	after(final XLoggable obj, final log log) returning() : loggingVoid(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
 		org.digimead.digi.lib.aop.Logging$.MODULE$.leavingMethod(
 				location.getFileName(), location.getLine(),
 				thisJoinPointStaticPart.getSignature(), obj);
 	}
 
-	after(final Loggable obj, final log log) throwing(final Exception ex) : logging(obj, log) {
+	after(final XLoggable obj, final log log) throwing(final Exception ex) : logging(obj, log) {
 		SourceLocation location = thisJoinPointStaticPart.getSourceLocation();
 		org.digimead.digi.lib.aop.Logging$.MODULE$.leavingMethodException(
 				location.getFileName(), location.getLine(),

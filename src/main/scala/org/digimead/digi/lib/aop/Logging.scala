@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,18 +58,18 @@
 package org.digimead.digi.lib.aop
 
 import org.aspectj.lang.Signature
-import org.digimead.digi.lib.log.api.Loggable
-import org.digimead.digi.lib.log.{ Logging => LLogging }
+import org.digimead.digi.lib.log.{ Logging ⇒ LLogging }
+import org.digimead.digi.lib.log.api.XLoggable
 
 object Logging {
   def enteringMethod(file: String, line: Int, signature: Signature, obj: AnyRef) {
     obj match {
-      case logging: Loggable =>
+      case logging: XLoggable ⇒
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
         logging.log.trace("[L%04d".format(line) + "] enteringMethod " + className + "::" + methodName)
-      case other =>
+      case other ⇒
         if (!LLogging.inner.commonLogger.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
@@ -78,12 +78,12 @@ object Logging {
   }
   def leavingMethod(file: String, line: Int, signature: Signature, obj: AnyRef) {
     obj match {
-      case logging: Loggable =>
+      case logging: XLoggable ⇒
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
         logging.log.trace("[L%04d".format(line) + "] leavingMethod " + className + "::" + methodName)
-      case other =>
+      case other ⇒
         if (!LLogging.inner.commonLogger.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
@@ -92,12 +92,12 @@ object Logging {
   }
   def leavingMethod(file: String, line: Int, signature: Signature, obj: AnyRef, returnValue: Object) {
     obj match {
-      case logging: Loggable =>
+      case logging: XLoggable ⇒
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
         logging.log.trace("[L%04d".format(line) + "] leavingMethod " + className + "::" + methodName + " result [" + returnValue + "]")
-      case other =>
+      case other ⇒
         if (!LLogging.inner.commonLogger.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
@@ -106,18 +106,18 @@ object Logging {
   }
   def leavingMethodException(file: String, line: Int, signature: Signature, obj: AnyRef, throwable: Exception) {
     obj match {
-      case logging: Loggable =>
+      case logging: XLoggable ⇒
         if (!logging.log.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
-        val exceptionMessage = throwable.getMessage();
-        logging.log.trace("[L%04d".format(line) + "] leavingMethodException " + className + "::" + methodName + ". Reason: " + exceptionMessage)
-      case other =>
+        val exceptionXMessage = throwable.getMessage();
+        logging.log.trace("[L%04d".format(line) + "] leavingMethodException " + className + "::" + methodName + ". Reason: " + exceptionXMessage)
+      case other ⇒
         if (!LLogging.inner.commonLogger.isTraceEnabled) return
         val className = signature.getDeclaringType().getSimpleName()
         val methodName = signature.getName()
-        val exceptionMessage = throwable.getMessage();
-        LLogging.inner.commonLogger.trace("[L%04d".format(line) + "] leavingMethodException " + className + "::" + methodName + " at " + file.takeWhile(_ != '.') + ". Reason: " + exceptionMessage)
+        val exceptionXMessage = throwable.getMessage();
+        LLogging.inner.commonLogger.trace("[L%04d".format(line) + "] leavingMethodException " + className + "::" + methodName + " at " + file.takeWhile(_ != '.') + ". Reason: " + exceptionXMessage)
     }
   }
 }

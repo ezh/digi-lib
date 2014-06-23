@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,16 @@
 package org.digimead.digi.lib.log
 
 import java.util.Date
+import org.digimead.digi.lib.log.api.XLevel
 
 class Message(val date: Date,
   val tid: Long,
-  val level: api.Level,
+  val level: XLevel,
   val tag: String,
   val tagClass: Class[_],
   val message: String,
   val throwable: Option[Throwable],
-  val pid: Int) extends api.Message {
+  val pid: Int) extends api.XMessage {
   override def toString = "%s P%05d T%05d %s %-24s %s".format(dateFormat.format(date),
     pid, tid, level.toString.charAt(0), tag + ":", message)
 }

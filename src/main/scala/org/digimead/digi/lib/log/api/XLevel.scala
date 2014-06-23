@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2013 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,12 @@
 
 package org.digimead.digi.lib.log.api
 
-import scala.annotation.implicitNotFound
+sealed trait XLevel
 
-trait Loggable {
-  @transient
-  implicit lazy val log: RichLogger = try {
-    org.digimead.digi.lib.log.Logging.getLogger(getClass)
-  } catch {
-    // allow to catch real exception cause
-    case e: NoClassDefFoundError =>
-      System.err.println(e)
-      throw new RuntimeException("Unable to get logger for " + getClass.getName, e)
-  }
-}
-
-object Loggable {
-  object Where {
-    val ALL = -1
-    val HERE = -2
-    val BEFORE = -3
-  }
+object XLevel {
+  case object Trace extends XLevel
+  case object Debug extends XLevel
+  case object Info extends XLevel
+  case object Warn extends XLevel
+  case object Error extends XLevel
 }
