@@ -97,6 +97,9 @@ libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-api" % "1.7.7"
   )
 
+// scala-compiler is required by SubCut, so add explicitly the current version
+libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
+
 //
 // Testing
 //
