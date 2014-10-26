@@ -5,6 +5,8 @@ Central module of all Digi applications and libraries, containing core services 
 
 [See Digi-Lib documentation](http://ezh.github.io/digi-lib/).
 
+__Required Java 7 or higher__
+
 LICENSE
 -------
 

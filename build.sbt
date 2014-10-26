@@ -46,39 +46,34 @@ inConfig(OSGiConf)({
   )
 })
 
-crossScalaVersions := Seq("2.11.1")
+crossScalaVersions := Seq("2.11.2")
 
-scalaVersion := "2.11.1"
+scalaVersion := "2.11.2"
 
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature")
 
-// http://vanillajava.blogspot.ru/2012/02/using-java-7-to-target-much-older-jvms.html
-javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation", "-source", "1.7", "-target", "1.7")
-
-javacOptions in doc := Seq("-source", "1.7")
-
-if (sys.env.contains("XBOOTCLASSPATH")) Seq(javacOptions += "-Xbootclasspath:" + sys.env("XBOOTCLASSPATH")) else Seq()
+javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
 //
 // AspectJ
 //
 
-aspectjSource in AJConf <<= sourceDirectory(_ / "test" / "aspectj")
+AJKey.aspectjSource in AJConf <<= sourceDirectory(_ / "test" / "aspectj")
 
-aspectjInputs in AJConf <<= (classDirectory in Compile, classDirectory in Test) map {(a,b) => Seq(a,b)}
+AJKey.aspectjInputs in AJConf <<= (classDirectory in Compile, classDirectory in Test) map {(a,b) => Seq(a,b)}
 
-aspectjFilter in AJConf := { (input, aspects) =>
+AJKey.aspectjFilter in AJConf := { (input, aspects) =>
   input.name match {
     case "test-classes" => aspects filter (_.toString.contains("/aspectj/org/digimead/digi/lib/aop/internal/"))
     case other => Seq.empty
   }
 }
 
-aspectjClasspath in AJConf <<= (dependencyClasspath in Test) map { _.files }
+AJKey.aspectjClasspath in AJConf <<= (dependencyClasspath in Test) map { _.files }
 
 AJKey.aspectjInputResources in AJConf <<= copyResources in Test
 
-products in Test <<= (products in Test, aspectjWeaveArg in AJConf, aspectjGenericArg in AJConf) map { (_, a, b) => AspectJ.weave(a)(b) }
+products in Test <<= (products in Test, AJKey.aspectjWeaveArg in AJConf, AJKey.aspectjGenericArg in AJConf) map { (_, a, b) => AspectJ.weave(a)(b) }
 
 //
 // Custom local options
@@ -91,12 +86,12 @@ libraryDependencies ++= Seq(
     // https://issues.scala-lang.org/browse/SI-7751
     // .../guava-15.0.jar(com/google/common/cache/CacheBuilder.class)' is broken
     // [error] (class java.lang.RuntimeException/bad constant pool index: 0 at pos: 15214)
-    "com.google.code.findbugs" % "jsr305" % "2.0.3",
-    "com.google.guava" % "guava" % "17.0",
-    "com.typesafe.akka" %% "akka-actor" % "2.3.3",
+    "com.google.code.findbugs" % "jsr305" % "3.0.0",
+    "com.google.guava" % "guava" % "18.0",
+    "com.typesafe.akka" %% "akka-actor" % "2.3.6",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
-    "org.aspectj" % "aspectjrt" % "1.8.0",
-    "org.digimead" %% "digi-lib-test" % "0.3.0.0-SNAPSHOT" % "test",
+    "org.aspectj" % "aspectjrt" % "1.8.2",
+    "org.digimead" %% "digi-lib-test" % "0.3.0.1" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
     "org.slf4j" % "slf4j-api" % "1.7.7"
