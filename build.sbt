@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
+// Copyright (c) 2012-2015 Alexey Aksenov ezh@ezh.msk.ru
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,16 +39,16 @@ inConfig(OSGiConf)({
   Seq[Project.Setting[_]](
     osgiBndBundleActivator := "org.digimead.digi.lib.Activator",
     osgiBndBundleSymbolicName := "org.digimead.digi.lib",
-    osgiBndBundleCopyright := "Copyright © 2011-2014 Alexey B. Aksenov/Ezh. All rights reserved.",
+    osgiBndBundleCopyright := "Copyright © 2011-2015 Alexey B. Aksenov/Ezh. All rights reserved.",
     osgiBndExportPackage := List("org.digimead.*", "com.escalatesoft.subcut.inject"),
     osgiBndImportPackage := List("!org.aspectj.*", "com.escalatesoft.subcut.inject", "*"),
     osgiBndBundleLicense := "http://www.apache.org/licenses/LICENSE-2.0.txt;description=The Apache Software License, Version 2.0"
   )
 })
 
-crossScalaVersions := Seq("2.11.2")
+crossScalaVersions := Seq("2.11.5")
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.5"
 
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature")
 
@@ -88,13 +88,13 @@ libraryDependencies ++= Seq(
     // [error] (class java.lang.RuntimeException/bad constant pool index: 0 at pos: 15214)
     "com.google.code.findbugs" % "jsr305" % "3.0.0",
     "com.google.guava" % "guava" % "18.0",
-    "com.typesafe.akka" %% "akka-actor" % "2.3.6",
+    "com.typesafe.akka" %% "akka-actor" % "2.3.8",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
-    "org.aspectj" % "aspectjrt" % "1.8.2",
-    "org.digimead" %% "digi-lib-test" % "0.3.0.1" % "test",
+    "org.aspectj" % "aspectjrt" % "1.8.4",
+    "org.digimead" %% "digi-lib-test" % "0.3.0.2" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
-    "org.slf4j" % "slf4j-api" % "1.7.7"
+    "org.slf4j" % "slf4j-api" % "1.7.10"
   )
 
 // scala-compiler is required by SubCut, so add explicitly the current version
