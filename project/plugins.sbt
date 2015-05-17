@@ -5,6 +5,6 @@ resolvers ++= Seq(
   "digimead-maven" at "http://storage.googleapis.com/maven.repository.digimead.org/"
 )
 
-addSbtPlugin("org.digimead" % "sbt-aspectj-nested" % "0.1.0.1-SNAPSHOT")
+addSbtPlugin("org.digimead" % "sbt-aspectj-nested" % "0.1.0.2-SNAPSHOT")
 
 addSbtPlugin("org.digimead" % "sbt-osgi-manager" % "0.3.0.1-SNAPSHOT")

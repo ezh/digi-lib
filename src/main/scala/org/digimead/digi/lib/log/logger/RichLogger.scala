@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2015 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,8 +161,8 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    * <p>This form avoids superfluous string concatenation when the logger
    * is disabled for the TRACE level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
-   * even if this logger is disabled for TRACE. The variants taking {@link #trace(String, Object) one} and
-   * {@link #trace(String, Object, Object) two} arguments exist solely in order to avoid this hidden cost.</p>
+   * even if this logger is disabled for TRACE. The variants taking trace(String, Object) one and
+   * trace(String, Object, Object) two arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
    * @param arguments a list of 3 or more arguments
@@ -174,7 +174,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Trace, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #trace(String, Object, Object)}
+   * This method is similar to trace(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -198,7 +198,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Trace, msg, Option(t)))
   }
   /**
-   * Similar to {@link #isTraceEnabled()} method except that the
+   * Similar to isTraceEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -220,7 +220,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Trace, msg, None))
   }
   /**
-   * This method is similar to {@link #trace(String, Object)} method except that the
+   * This method is similar to trace(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -234,7 +234,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Trace, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #trace(String, Object...)}
+   * This method is similar to trace(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -264,7 +264,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     this.asInstanceOf[{ def trace(marker: Marker, format: String, arguments: AnyRef*): Unit }].
       trace(marker, format, arg1, arg2)
   /**
-   * This method is similar to {@link #trace(String, Throwable)} method except that the
+   * This method is similar to trace(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -324,7 +324,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    * is disabled for the DEBUG level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for DEBUG. The variants taking
-   * {@link #debug(String, Object) one} and {@link #debug(String, Object, Object) two}
+   * debug(String, Object) one and debug(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -336,7 +336,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Debug, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #debug(String, Object, Object)}
+   * This method is similar to debug(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -359,7 +359,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Debug, msg, Option(t)))
   }
   /**
-   * Similar to {@link #isDebugEnabled()} method except that the
+   * Similar to isDebugEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -378,7 +378,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Debug, msg, None))
   }
   /**
-   * This method is similar to {@link #debug(String, Object)} method except that the
+   * This method is similar to debug(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -391,7 +391,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Debug, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #debug(String, Object...)}
+   * This method is similar to debug(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -420,7 +420,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     this.asInstanceOf[{ def debug(marker: Marker, format: String, arguments: AnyRef*): Unit }].
       debug(marker, format, arg1, arg2)
   /**
-   * This method is similar to {@link #debug(String, Throwable)} method except that the
+   * This method is similar to debug(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -475,7 +475,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    * is disabled for the INFO level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for INFO. The variants taking
-   * {@link #info(String, Object) one} and {@link #info(String, Object, Object) two}
+   * info(String, Object) one and info(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -487,7 +487,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Info, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #info(String, Object, Object)}
+   * This method is similar to info(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -510,7 +510,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Info, msg, Option(t)))
   }
   /**
-   * Similar to {@link #isInfoEnabled()} method except that the
+   * Similar to isInfoEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -529,7 +529,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Info, msg, None))
   }
   /**
-   * This method is similar to {@link #info(String, Object)} method except that the
+   * This method is similar to info(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -542,7 +542,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Info, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #info(String, Object...)}
+   * This method is similar to info(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -571,7 +571,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     this.asInstanceOf[{ def info(marker: Marker, format: String, arguments: AnyRef*): Unit }].
       info(marker, format, arg1, arg2)
   /**
-   * This method is similar to {@link #info(String, Throwable)} method except that the
+   * This method is similar to info(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -626,7 +626,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    * is disabled for the WARN level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for WARN. The variants taking
-   * {@link #warn(String, Object) one} and {@link #warn(String, Object, Object) two}
+   * warn(String, Object) one and warn(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -638,7 +638,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Warn, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #warn(String, Object, Object)}
+   * This method is similar to warn(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -661,7 +661,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Warn, msg, Option(t)))
   }
   /**
-   * Similar to {@link #isWarnEnabled()} method except that the
+   * Similar to isWarnEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -680,7 +680,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Warn, msg, None))
   }
   /**
-   * This method is similar to {@link #warn(String, Object)} method except that the
+   * This method is similar to warn(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -693,7 +693,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Warn, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #warn(String, Object...)}
+   * This method is similar to warn(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -722,7 +722,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     this.asInstanceOf[{ def warn(marker: Marker, format: String, arguments: AnyRef*): Unit }].
       warn(marker, format, arg1, arg2)
   /**
-   * This method is similar to {@link #warn(String, Throwable)} method except that the
+   * This method is similar to warn(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -777,7 +777,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
    * is disabled for the ERROR level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for ERROR. The variants taking
-   * {@link #error(String, Object) one} and {@link #error(String, Object, Object) two}
+   * error(String, Object) one and error(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -789,7 +789,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Error, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #error(String, Object, Object)}
+   * This method is similar to error(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -812,7 +812,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Error, msg, Option(t)))
   }
   /**
-   * Similar to {@link #isErrorEnabled()} method except that the
+   * Similar to isErrorEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -831,7 +831,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Error, msg, None))
   }
   /**
-   * This method is similar to {@link #error(String, Object)} method except that the
+   * This method is similar to error(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -844,7 +844,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     XEvent.publish(XEvent.Incoming(this, XLevel.Error, ft.getMessage(), Option(ft.getThrowable())))
   }
   /**
-   * This method is similar to {@link #error(String, Object...)}
+   * This method is similar to error(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -873,7 +873,7 @@ class RichLogger private[log] (val base: org.slf4j.Logger, val isWhereEnabled: B
     this.asInstanceOf[{ def error(marker: Marker, format: String, arguments: AnyRef*): Unit }].
       error(marker, format, arg1, arg2)
   /**
-   * This method is similar to {@link #error(String, Throwable)} method except that the
+   * This method is similar to error(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement

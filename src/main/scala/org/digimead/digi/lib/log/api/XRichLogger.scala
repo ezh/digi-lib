@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2015 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,8 @@ trait XRichLogger extends org.slf4j.Logger {
    * <p>This form avoids superfluous string concatenation when the logger
    * is disabled for the TRACE level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
-   * even if this logger is disabled for TRACE. The variants taking {@link #trace(String, Object) one} and
-   * {@link #trace(String, Object, Object) two} arguments exist solely in order to avoid this hidden cost.</p>
+   * even if this logger is disabled for TRACE. The variants taking trace(String, Object) one and
+   * trace(String, Object, Object) two arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
    * @param arguments a list of 3 or more arguments
@@ -94,7 +94,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def trace(format: String, arguments: AnyRef*)
   /**
-   * This method is similar to {@link #trace(String, Object, Object)}
+   * This method is similar to trace(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -113,7 +113,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def trace(msg: String, t: Throwable)
   /**
-   * Similar to {@link #isTraceEnabled()} method except that the
+   * Similar to isTraceEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -132,7 +132,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def trace(marker: Marker, msg: String)
   /**
-   * This method is similar to {@link #trace(String, Object)} method except that the
+   * This method is similar to trace(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -142,7 +142,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def trace(marker: Marker, format: String, arg: AnyRef)
   /**
-   * This method is similar to {@link #trace(String, Object...)}
+   * This method is similar to trace(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -166,7 +166,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def trace(marker: Marker, format: String, arg1: AnyRef, arg2: AnyRef)
   /**
-   * This method is similar to {@link #trace(String, Throwable)} method except that the
+   * This method is similar to trace(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -212,7 +212,7 @@ trait XRichLogger extends org.slf4j.Logger {
    * is disabled for the DEBUG level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for DEBUG. The variants taking
-   * {@link #debug(String, Object) one} and {@link #debug(String, Object, Object) two}
+   * debug(String, Object) one and debug(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -220,7 +220,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def debug(format: String, arguments: AnyRef*)
   /**
-   * This method is similar to {@link #debug(String, Object, Object)}
+   * This method is similar to debug(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -238,7 +238,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def debug(msg: String, t: Throwable)
   /**
-   * Similar to {@link #isDebugEnabled()} method except that the
+   * Similar to isDebugEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -254,7 +254,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def debug(marker: Marker, msg: String)
   /**
-   * This method is similar to {@link #debug(String, Object)} method except that the
+   * This method is similar to debug(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -263,7 +263,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def debug(marker: Marker, format: String, arg: AnyRef)
   /**
-   * This method is similar to {@link #debug(String, Object...)}
+   * This method is similar to debug(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -286,7 +286,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def debug(marker: Marker, format: String, arg1: AnyRef, arg2: AnyRef)
   /**
-   * This method is similar to {@link #debug(String, Throwable)} method except that the
+   * This method is similar to debug(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -331,7 +331,7 @@ trait XRichLogger extends org.slf4j.Logger {
    * is disabled for the INFO level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for INFO. The variants taking
-   * {@link #info(String, Object) one} and {@link #info(String, Object, Object) two}
+   * info(String, Object) one and info(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -339,7 +339,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def info(format: String, arguments: AnyRef*)
   /**
-   * This method is similar to {@link #info(String, Object, Object)}
+   * This method is similar to info(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -357,7 +357,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def info(msg: String, t: Throwable)
   /**
-   * Similar to {@link #isInfoEnabled()} method except that the
+   * Similar to isInfoEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -373,7 +373,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def info(marker: Marker, msg: String)
   /**
-   * This method is similar to {@link #info(String, Object)} method except that the
+   * This method is similar to info(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -382,7 +382,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def info(marker: Marker, format: String, arg: AnyRef)
   /**
-   * This method is similar to {@link #info(String, Object...)}
+   * This method is similar to info(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -405,7 +405,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def info(marker: Marker, format: String, arg1: AnyRef, arg2: AnyRef)
   /**
-   * This method is similar to {@link #info(String, Throwable)} method except that the
+   * This method is similar to info(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -450,7 +450,7 @@ trait XRichLogger extends org.slf4j.Logger {
    * is disabled for the WARN level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for WARN. The variants taking
-   * {@link #warn(String, Object) one} and {@link #warn(String, Object, Object) two}
+   * warn(String, Object) one and warn(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -458,9 +458,11 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def warn(format: String, arguments: AnyRef*)
   /**
-   * This method is similar to {@link #warn(String, Object, Object)}
-   * method except that the marker data is also taken into
-   * consideration.
+   * Log a message at the WARN level according to the specified format
+   * and arguments.
+   * <p/>
+   * <p>This form avoids superfluous object creation when the logger
+   * is disabled for the WARN level. </p>
    *
    * @param format the format string
    * @param arg1   the first argument
@@ -476,7 +478,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def warn(msg: String, t: Throwable)
   /**
-   * Similar to {@link #isWarnEnabled()} method except that the
+   * Similar to isWarnEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -492,7 +494,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def warn(marker: Marker, msg: String)
   /**
-   * This method is similar to {@link #warn(String, Object)} method except that the
+   * This method is similar to warn(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -501,7 +503,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def warn(marker: Marker, format: String, arg: AnyRef)
   /**
-   * This method is similar to {@link #warn(String, Object...)}
+   * This method is similar to warn(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -524,7 +526,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def warn(marker: Marker, format: String, arg1: AnyRef, arg2: AnyRef)
   /**
-   * This method is similar to {@link #warn(String, Throwable)} method except that the
+   * This method is similar to warn(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -569,7 +571,7 @@ trait XRichLogger extends org.slf4j.Logger {
    * is disabled for the ERROR level. However, this variant incurs the hidden
    * (and relatively small) cost of creating an <code>Object[]</code> before invoking the method,
    * even if this logger is disabled for ERROR. The variants taking
-   * {@link #error(String, Object) one} and {@link #error(String, Object, Object) two}
+   * error(String, Object) one and error(String, Object, Object) two
    * arguments exist solely in order to avoid this hidden cost.</p>
    *
    * @param format    the format string
@@ -577,7 +579,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def error(format: String, arguments: AnyRef*)
   /**
-   * This method is similar to {@link #error(String, Object, Object)}
+   * This method is similar to error(String, Object, Object)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -595,7 +597,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def error(msg: String, t: Throwable)
   /**
-   * Similar to {@link #isErrorEnabled()} method except that the
+   * Similar to isErrorEnabled() method except that the
    * marker data is also taken into account.
    *
    * @param marker The marker data to take into consideration
@@ -611,7 +613,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def error(marker: Marker, msg: String)
   /**
-   * This method is similar to {@link #error(String, Object)} method except that the
+   * This method is similar to error(String, Object) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement
@@ -620,7 +622,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def error(marker: Marker, format: String, arg: AnyRef)
   /**
-   * This method is similar to {@link #error(String, Object...)}
+   * This method is similar to error(String, Object...)
    * method except that the marker data is also taken into
    * consideration.
    *
@@ -643,7 +645,7 @@ trait XRichLogger extends org.slf4j.Logger {
    */
   def error(marker: Marker, format: String, arg1: AnyRef, arg2: AnyRef)
   /**
-   * This method is similar to {@link #error(String, Throwable)} method except that the
+   * This method is similar to error(String, Throwable) method except that the
    * marker data is also taken into consideration.
    *
    * @param marker the marker data specific to this log statement

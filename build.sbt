@@ -36,7 +36,7 @@ version <<= (baseDirectory) { (b) => scala.io.Source.fromFile(b / "version").mkS
 
 inConfig(OSGiConf)({
   import OSGiKey._
-  Seq[Project.Setting[_]](
+  Seq(
     osgiBndBundleActivator := "org.digimead.digi.lib.Activator",
     osgiBndBundleSymbolicName := "org.digimead.digi.lib",
     osgiBndBundleCopyright := "Copyright © 2011-2015 Alexey B. Aksenov/Ezh. All rights reserved.",
@@ -46,9 +46,9 @@ inConfig(OSGiConf)({
   )
 })
 
-crossScalaVersions := Seq("2.11.5")
+crossScalaVersions := Seq("2.11.6")
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-Xcheckinit", "-feature")
 
@@ -88,13 +88,13 @@ libraryDependencies ++= Seq(
     // [error] (class java.lang.RuntimeException/bad constant pool index: 0 at pos: 15214)
     "com.google.code.findbugs" % "jsr305" % "3.0.0",
     "com.google.guava" % "guava" % "18.0",
-    "com.typesafe.akka" %% "akka-actor" % "2.3.8",
+    "com.typesafe.akka" %% "akka-actor" % "2.3.11",
     "org.apache.felix" % "org.apache.felix.log" % "1.0.1" % "test",
-    "org.aspectj" % "aspectjrt" % "1.8.4",
-    "org.digimead" %% "digi-lib-test" % "0.3.0.2" % "test",
+    "org.aspectj" % "aspectjrt" % "1.8.5",
+    "org.digimead" %% "digi-lib-test" % "0.3.0.3" % "test",
     "org.osgi" % "org.osgi.core" % "5.0.0",
     "org.osgi" % "org.osgi.compendium" % "4.3.1",
-    "org.slf4j" % "slf4j-api" % "1.7.10"
+    "org.slf4j" % "slf4j-api" % "1.7.12"
   )
 
 // scala-compiler is required by SubCut, so add explicitly the current version
@@ -111,7 +111,7 @@ testGrouping in Test <<= (definedTests in Test) map { tests =>
     new Tests.Group(
       name = test.name,
       tests = Seq(test),
-      runPolicy = Tests.SubProcess(javaOptions = Seq.empty[String]))
+      runPolicy = Tests.SubProcess(ForkOptions(runJVMOptions = Seq.empty[String])))
   }
 }
 
