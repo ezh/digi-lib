@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2015 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,8 +215,8 @@ object Logging {
       }
     }
     val namePrefix = inner.logPrefix
-    val name1stPart = clazz.getPackage.getName.split("""\.""").last
-    val name2ndPart = thatMethodElement match {
+    val nameHeadPart = clazz.getPackage.getName.split("""\.""").takeRight(packageNameLength)
+    val nameTailPart = thatMethodElement match {
       case Some(element) ⇒
         val fileRaw = element.getFileName.split("""\.""")
         if (fileRaw.length > 1) fileRaw.dropRight(1).mkString(".") else fileRaw.head
@@ -224,7 +224,7 @@ object Logging {
         clazz.getName.split("""[\.$]""").last
     }
     val nameSuffix = if (clazz.getClass().toString.last == '$') "$" else ""
-    getLogger(namePrefix + name1stPart + "." + name2ndPart + nameSuffix, clazz)
+    getLogger(namePrefix + (nameHeadPart :+ nameTailPart).mkString(".") + nameSuffix, clazz)
   }
   def getLogger(name: String, tagClass: Class[_] = null): XRichLogger = {
     val implementation = inner
@@ -243,6 +243,7 @@ object Logging {
     }
   }
   def inner() = DI.implementation
+  def packageNameLength() = DI.packageNameLength
   def shutdownHook() = DI.shutdownHook
 
   abstract class BufferedLogThread extends Thread(s"Generic buffered logger for ${Logging.getClass.getName}") {
@@ -257,6 +258,8 @@ object Logging {
   private object DI extends XDependencyInjection.PersistentInjectable {
     /** Logging implementation */
     lazy val implementation = inject[Logging]
+    /** Log message package name length. */
+    lazy val packageNameLength = injectOptional[Int]("Log.PackageNameLength") getOrElse 1
     /** User defined shutdown hook */
     lazy val shutdownHook = injectOptional[() ⇒ Any]("Log.ShutdownHook")
   }

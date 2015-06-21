@@ -45,6 +45,7 @@ package object log {
         // add class tag if possible
         richLogger.base match {
           case base: BaseLogger ⇒ base.loggerClass = classTag
+          case log4j if log4j.getClass.getName == "org.slf4j.impl.Log4jLoggerAdapter" ⇒ // skip Log4jLoggerAdapter logger - API is very poor
           case other: org.slf4j.Logger ⇒ // skip other unknown logger
         }
         richLogger

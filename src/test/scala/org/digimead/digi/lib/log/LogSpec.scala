@@ -1,7 +1,7 @@
 /**
  * Digi-Lib - base library for Digi components
  *
- * Copyright (c) 2012-2014 Alexey Aksenov ezh@ezh.msk.ru
+ * Copyright (c) 2012-2015 Alexey Aksenov ezh@ezh.msk.ru
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.digimead.digi.lib.log.logger.RichLogger
 import org.digimead.lib.test.LoggingHelper
 import org.scalatest.{ ConfigMap, FunSpec, Matchers, PrivateMethodTester, WordSpec }
 import scala.annotation.implicitNotFound
+import scala.collection.JavaConversions.asScalaBuffer
 
 class LogSpec000 extends LogSpec.Base {
   "A Log Singleton" should {
@@ -89,6 +90,23 @@ class LogSpec002 extends LogSpec.Base {
       DependencyInjection(config)
       val instance = Logging inner ()
       instance.isWhereEnabled should be(true)
+    }
+  }
+}
+
+class LogSpec003 extends LogSpec.Base {
+  "A Log Singleton" should {
+    "should be able to adjust log record name length" in {
+      val config1 = org.digimead.digi.lib.log.default ~ org.digimead.digi.lib.default
+      val config2 = new NewBindingModule(module ⇒ {
+        module.bind[Int] identifiedBy "Log.PackageNameLength" toSingle { 3 }
+      })
+      val config = config2 ~ config1
+      config.inject[Int](Some("Log.PackageNameLength")) should be(3)
+      DependencyInjection(config)
+      val instance = Logging inner ()
+      Logging.packageNameLength() should be(3)
+      Logging.getLogger(getClass).getName() should be("@digi.lib.log.Transformer")
     }
   }
 }
